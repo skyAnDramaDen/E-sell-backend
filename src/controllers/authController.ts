@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
-import prisma from "../config/dbClient";
+import prisma from "../config/dbClient.js";
 
-import { RegisterRequestBody, AuthResponse, UserDTO, LoginRequestBody } from "../types/interfaces";
+import { RegisterRequestBody, AuthResponse, UserDTO, LoginRequestBody } from "../types/interfaces.js";
 import {hash} from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -34,7 +34,6 @@ export const register_user = async (
 ) => {
     try {
         const { name, email, password } = req.body;
-        console.log("Registering user");
 
         if (!name || !email || !password) {
             return res.status(400).json({
@@ -68,13 +67,14 @@ export const register_user = async (
 
         const { password: _, ...safe_user } = user;
 
+
         return res.status(201).json({
             message: "User has been created successfully",
             user,
+            token,
         })
 
     } catch (error) {
-        console.log(error);
         return res.status(501).json({
             message: "An unexpected error occurred. Please try again later"
         })
@@ -86,13 +86,11 @@ export const login_user = async (
     res: Response<AuthResponse | { message: string }>
 )=> {
     try {
-        console.log("Logging in user");
-
         const { email, password } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({
-                message: "USer email or password is missing",
+                message: "User email or password is missing",
             })
         }
 
@@ -126,6 +124,5 @@ export const login_user = async (
             user
         })
     } catch (error) {
-        console.log(error);
     }
 }

@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Product" ALTER COLUMN "lowestCategoryId" SET DATA TYPE TEXT,
+ALTER COLUMN "subCategoryId" SET DATA TYPE TEXT,
+ALTER COLUMN "topCategoryId" SET DATA TYPE TEXT;
