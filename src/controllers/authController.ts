@@ -18,14 +18,6 @@ function generate_token (user_id: string) : string {
     const options: jwt.SignOptions = { expiresIn: Number(JWT_EXPIRES_IN) };
 
     return jwt.sign(payload, JWT_SECRET as string, options);
-
-    // return jwt.sign(
-    //     { id: user_id } ,
-    //     JWT_SECRET as string,
-    //     {
-    //         expiresIn: JWT_EXPIRES_IN
-    //     }
-    // );
 }
 
 export const register_user = async (
@@ -86,6 +78,7 @@ export const login_user = async (
     res: Response<AuthResponse | { message: string }>
 )=> {
     try {
+        console.log("This is getting to login user here?");
         const { email, password } = req.body;
 
         if (!email || !password) {

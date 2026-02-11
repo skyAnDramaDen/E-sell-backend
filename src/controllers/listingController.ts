@@ -177,6 +177,7 @@ export const delete_listing = async (req: Request, res: Response<ListingResponse
 export const search_listings = async (req: Request, res: Response<Listings | { message: string }>) => {
     try {
         const search = req.query.search as string;
+        const category = req.query.category as string;
 
         if (!search) {
             return res.status(404).json({
@@ -188,10 +189,18 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
 
         const products = await prisma.product.findMany({
             where: {
-                name: {
-                    contains: search,
-                    mode: "insensitive",
-                }
+                ...(search && {
+                    name: {
+                        contains: search,
+                        mode: "insensitive",
+                    }
+                }),
+                ...(category && {
+                    topCategory: {
+                        contains: category,
+                        mode: "insensitive"
+                    }
+                })
             }
         })
 
