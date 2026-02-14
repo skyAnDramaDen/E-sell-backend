@@ -5,6 +5,7 @@ import argon2 from "argon2";
 
 import authRoutes from "./routes/auth.js";
 import listingRoute from "./routes/listingRoute.js";
+import userRoute from "./routes/userRoute.js";
 
 dotenv.config();
 
@@ -17,12 +18,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-    // console.log("GET /");
-
     res.send("Hello World");
 })
 app.use("/auth", authRoutes);
-app.use("/listing", listingRoute)
+app.use("/listing", listingRoute);
+app.use("/user", userRoute);
 
 app.listen(PORT, () => {
     console.log(`The server is listening on PORT ${PORT}!`);

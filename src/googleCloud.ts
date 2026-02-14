@@ -1,15 +1,11 @@
 import { Storage } from "@google-cloud/storage";
 
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const keyPath = path.join(__dirname, "..", "serviceAccountKey.json");
-
 export const storage = new Storage({
-    keyFilename: keyPath,
+    projectId: process.env.GCS_PROJECT_ID,
+    credentials: {
+        client_email: process.env.GCS_CLIENT_EMAIL,
+        private_key: process.env.GCS_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    },
 });
 
 export const bucket = storage.bucket("frontend-image-bucket-for-12000-native-app");

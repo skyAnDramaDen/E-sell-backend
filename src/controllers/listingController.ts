@@ -141,6 +141,7 @@ export const get_all_listings = async (req: Request, res: Response<Listings>) =>
             return res.status(201).json(listings);
 
     } catch (error) {
+        console.log("there is an error here", error);
         return res.status(500).json({
             message: "Failed to get listings"
         })
@@ -179,9 +180,12 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
         const search = req.query.search as string;
         const category = req.query.category as string;
 
-        if (!search) {
+        console.log("This is the search", search);
+        console.log("This is the category", category);
+
+        if (!search && !category) {
             return res.status(404).json({
-                message: "No search found"
+                message: "Pls include the right params"
             });
         }
 
@@ -203,6 +207,8 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
                 })
             }
         })
+
+        console.log(products);
 
         let publicUrl;
 

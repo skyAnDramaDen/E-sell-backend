@@ -47,9 +47,11 @@ export const register_user = async (
 
         const hashed_password = await argon2.hash(password);
 
+        let users_name = (name.trim().slice(0, 1).toUpperCase() + (name.trim().slice(1).toLowerCase()));
+
         const user = await prisma.user.create({
             data: {
-                name,
+                name: users_name,
                 email,
                 password: hashed_password,
             }
@@ -78,7 +80,6 @@ export const login_user = async (
     res: Response<AuthResponse | { message: string }>
 )=> {
     try {
-        console.log("This is getting to login user here?");
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -118,4 +119,8 @@ export const login_user = async (
         })
     } catch (error) {
     }
+}
+
+export const logout_user = async (req: Request, res: Response) => {
+
 }
