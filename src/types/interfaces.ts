@@ -67,10 +67,16 @@ export interface User {
     createdAt: Date;
     updatedAt: Date;
     products?: Product[];
-    phoneNumber?: number
+    phoneNumber?: string | null;
 }
 
 export interface EditUserResponseBody {
     success: boolean;
     message?: any;
+    user?: User;
+}
+
+export interface GetUserResponseBody {
+    user?: User;
+    success: boolean;
 }

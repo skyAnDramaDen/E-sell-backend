@@ -80,6 +80,7 @@ export const login_user = async (
     res: Response<AuthResponse | { message: string }>
 )=> {
     try {
+
         const { email, password } = req.body;
 
         if (!email || !password) {
