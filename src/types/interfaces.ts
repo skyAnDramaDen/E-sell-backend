@@ -68,6 +68,7 @@ export interface User {
     updatedAt: Date;
     products?: Product[];
     phoneNumber?: string | null;
+    profileImageUri?: string | null;
 }
 
 export interface EditUserResponseBody {
@@ -79,4 +80,9 @@ export interface EditUserResponseBody {
 export interface GetUserResponseBody {
     user?: User;
     success: boolean;
+}
+
+export interface EditUserPayload {
+    user: UserDTO;
+    formData: FormData;
 }
