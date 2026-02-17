@@ -29,7 +29,8 @@ export const register_user = async (
 
         if (!name || !email || !password) {
             return res.status(400).json({
-                message: "Name, email or password missing"
+                message: "Name, email or password missing",
+                success: false,
             })
         }
 
@@ -42,6 +43,7 @@ export const register_user = async (
         if (existing_user) {
             return res.status(400).json({
                 message: "A user with that email already exists",
+                success: false,
             })
         }
 
@@ -61,23 +63,35 @@ export const register_user = async (
 
         const { password: _, ...safe_user } = user;
 
+        let filtered_user;
+
+        if (user.phoneNumber) {
+            filtered_user = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+            }
+        }
 
         return res.status(201).json({
             message: "User has been created successfully",
-            user,
+            user: filtered_user,
             token,
+            success: true,
         })
 
     } catch (error) {
         return res.status(501).json({
-            message: "An unexpected error occurred. Please try again later"
+            message: "An unexpected error occurred. Please try again later",
+            success: false,
         })
     }
 }
 
 export const login_user = async (
     req: Request<{}, {}, LoginRequestBody>,
-    res: Response<AuthResponse | { message: string }>
+    res: Response<AuthResponse>
 )=> {
     try {
 
@@ -86,6 +100,7 @@ export const login_user = async (
         if (!email || !password) {
             return res.status(400).json({
                 message: "User email or password is missing",
+                success: false,
             })
         }
 
@@ -97,7 +112,8 @@ export const login_user = async (
 
         if (!user) {
             return res.status(400).json({
-                message: "User not found!"
+                message: "User not found!",
+                success: false,
             })
         }
 
@@ -105,8 +121,20 @@ export const login_user = async (
 
         if (!is_password_valid) {
             return res.status(400).json({
-                message: "Invalid password!"
+                message: "Email and password do not match",
+                success: false,
             })
+        }
+
+        let filtered_user;
+
+        if (user.phoneNumber) {
+            filtered_user = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+            }
         }
 
         const token = generate_token(user.id);
@@ -116,7 +144,8 @@ export const login_user = async (
         return res.status(201).json({
             token,
             message: "User has been logged in successfully",
-            user
+            user: filtered_user,
+            success: true,
         })
     } catch (error) {
     }

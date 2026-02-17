@@ -5,7 +5,7 @@ import {upload} from "../middleware/upload.js";
 
 const router = express.Router();
 
-router.post("/edit",upload.array("image", 1), edit_user);
+router.post("/edit",upload.array("image", 2), edit_user);
 router.get("/:id", get_user);
 
 export default router;

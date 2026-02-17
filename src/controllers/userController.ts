@@ -38,8 +38,7 @@ export const edit_user = async (req: Request, res: Response<EditUserResponseBody
         let blob;
 
         if (files.length > 0) {
-            users_image_uri = `${user.id}_profile_image/${uuid()}.jpg`;
-            fileName = users_image_uri;
+            fileName = `${user.id}_profile_image/${uuid()}.jpg`;
             try {
                 blob = bucket.file(fileName);
             } catch (err) {
@@ -60,6 +59,8 @@ export const edit_user = async (req: Request, res: Response<EditUserResponseBody
                         .on("error", reject)
                         .end(files[0].buffer);
                 });
+
+                users_image_uri = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
 
                 if (user.profileImageUri != users_image_uri) {
                     await prisma.user.update({

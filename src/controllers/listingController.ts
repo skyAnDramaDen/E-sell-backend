@@ -10,10 +10,12 @@ import {
     Product,
     ListingResponseBody,
     Listings,
-    Products
+    Products,
+    ProductAndSellerResponseBody,
+    MessageAndSuccessResponseBody
 } from "../types/interfaces.js";
 
-export const create_listing = async (req: Request, res: Response<ListingResponseBody>) => {
+export const create_listing = async (req: Request, res: Response<ListingResponseBody | MessageAndSuccessResponseBody>) => {
     try {
         req.body.price = Number(req.body.price);
 
@@ -24,7 +26,8 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
         const files = req.files as Express.Multer.File[];
 
         if (!files || files.length === 0) {
-            return res.status(400).json({ message: "No files uploaded" });
+            return res.status(400).json({ message: "No files uploaded",
+            success: false });
         }
 
         let imageUrls: string[] = [];
@@ -40,7 +43,8 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
                         id: product.id,
                     }
                 })
-                return res.status(500).json({ message: "Error accessing GCS bucket"});
+                return res.status(500).json({ message: "Error accessing GCS bucket",
+                success: false });
             }
 
             try {
@@ -60,7 +64,8 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
                         id: product.id,
                     }
                 })
-                return res.status(500).json({ message: "Error uploading file"});
+                return res.status(500).json({ message: "Error uploading file",
+                success: false });
             }
 
             // Make the uploaded file public
@@ -76,23 +81,30 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
         });
     } catch (error) {
         return res.json({
-            message: "This is a message"
+            message: "There was a server error",
+            success: false,
         })
     }
 }
 
-export const get_listing = async (req: Request, res: Response<ListingResponseBody>) => {
+export const get_listing = async (req: Request, res: Response<ProductAndSellerResponseBody | MessageAndSuccessResponseBody>) => {
     try {
         const product_id = req.params.id;
 
         const product = await prisma.product.findUnique({
             where: {
                 id: product_id,
+            },
+            include: {
+                user: true,
             }
         })
 
+        let final_user: ProductAndSellerResponseBody;
+
         if (!product) {
-            return res.status(404).json({ message: "Product not found" });
+            return res.status(404).json({ message: "Product not found",
+            success: false,});
         }
 
         const [files] = await bucket.getFiles({
@@ -101,11 +113,30 @@ export const get_listing = async (req: Request, res: Response<ListingResponseBod
 
         const imageUrls = files.map(file => file.publicUrl());
 
-        return res.status(200).json({
-            product: product,
+        final_user = {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            condition: product.condition,
+            price: product.price,
+            availability: product.availability,
+            topCategoryId: product.topCategoryId,
+            topCategory: product.topCategory,
+            subCategoryId: product.subCategoryId,
+            subCategory: product.subCategory,
+            lowestCategoryId: product.lowestCategoryId,
+            lowestCategory: product.lowestCategory,
+            location: product.location,
+            sellerName: product.user.name,
+            sellerPhoneNumber: product.user.phoneNumber ? product.user.phoneNumber : "",
+            message: "Successfully fetching product and seller data",
             images: imageUrls,
-            message: "This has been successful"
-        });
+            success: true,
+        }
+
+        console.log(final_user.images);
+
+        return res.status(200).json(final_user);
     } catch (error) {
     }
 }
