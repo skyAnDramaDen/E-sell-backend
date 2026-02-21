@@ -12,8 +12,11 @@ import {
     Listings,
     Products,
     EditUserResponseBody,
-    GetUserResponseBody,
+    GetUserResponseBody, MessageAndSuccessResponseBody,
 } from "../types/interfaces.js";
+
+import { passwordsMatch, validatePassword } from "../utils/passwordVerifier.js";
+import argon2 from "argon2";
 
 export const edit_user = async (req: Request, res: Response<EditUserResponseBody>) => {
     try {
@@ -144,6 +147,105 @@ export const get_user = async (req: Request, res: Response<GetUserResponseBody>)
         })
     } catch (error) {
         return res.status(500).json({
+            success: false,
+        })
+    }
+}
+
+export const change_user_password = async (req: Request, res: Response<MessageAndSuccessResponseBody>,) => {
+    try {
+        const { id, password1, password2 } = req.body;
+
+        console.log(id, password1, password2);
+
+        const user = await prisma.user.findUnique({
+            where: {
+                id: id,
+            }
+        })
+
+        if (!user) {
+            return res.status(400).json({
+                message: "No such user was found",
+                success: false,
+            })
+        }
+
+        if (!password1 || !password2) {
+            return res.status(400).json({
+                message: "Password missing",
+                success: false,
+            })
+        }
+
+        let passwords_match = passwordsMatch(password1, password2);
+
+        if (!passwords_match) {
+            return res.status(400).json({
+                message: "The passwords do not match",
+                success: false,
+            })
+        }
+
+        let validate_password1 = validatePassword(password1);
+
+        if (!validate_password1.hasLower) {
+            return res.status(400).json({
+                message: "Password does not contain a lowercase character!",
+                success: false,
+            })
+        }
+
+        if (!validate_password1.hasSymbol) {
+            return res.status(400).json({
+                message: "Password does not contain a special character!",
+                success: false,
+            })
+        }
+
+        if (!validate_password1.hasUpper) {
+            return res.status(400).json({
+                message: "Password does not contain an uppercase character!",
+                success: false,
+            })
+        }
+
+        if (!validate_password1.hasNumber) {
+            return res.status(400).json({
+                message: "Password does not contain a number!",
+                success: false,
+            })
+        }
+
+        if (!validate_password1.length) {
+            return res.status(400).json({
+                message: "Password needs to be at least 8 characters long!",
+                success: false,
+            })
+        }
+
+        if (validate_password1.hasSpace) {
+            return res.status(400).json({
+                message: "Password cannot contain space characters!",
+                success: false,
+            })
+        }
+
+        let usable_password = password1.trim();
+        const hashed_password = await argon2.hash(usable_password);
+
+        await prisma.user.update({
+            where: {id: id},
+            data: {password: hashed_password},
+        });
+
+        return res.status(200).json({
+            message: "Password updated successfully",
+            success: true,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error updating password",
             success: false,
         })
     }

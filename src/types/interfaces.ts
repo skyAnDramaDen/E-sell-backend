@@ -57,7 +57,7 @@ export interface Listing {
     images: string[];
 }
 
-export type Listings = Listing[] | { message: string };
+export type Listings = Listing[] | { message: string, success: boolean };
 
 export interface Product {
     id: string;

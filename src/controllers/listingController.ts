@@ -134,8 +134,6 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
             success: true,
         }
 
-        console.log(final_user.images);
-
         return res.status(200).json(final_user);
     } catch (error) {
     }
@@ -152,7 +150,9 @@ export const get_all_listings = async (req: Request, res: Response<Listings>) =>
         })
 
         if (!products || products.length === 0) {
-            return res.status(404).json({ message: "No products were found" });
+            return res.status(404).json({ message: "You currently do not have any listings",
+            success: false,
+            });
         }
 
         let listings: { product: Product, images: string[] }[] = [];
@@ -173,7 +173,8 @@ export const get_all_listings = async (req: Request, res: Response<Listings>) =>
 
     } catch (error) {
         return res.status(500).json({
-            message: "Failed to get listings"
+            message: "Failed to get listings",
+            success: false,
         })
     }
 }
@@ -211,7 +212,6 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
         const category = req.query.category as string;
         const id = req.query.id as string;
 
-
         if (!search && !category) {
             return res.status(404).json({
                 message: "Pls include the right params"
@@ -220,7 +220,7 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
 
         let listings: { product: Product, images: string[] }[] = [];
 
-        const products = await prisma.product.findMany({
+        const top_category_products = await prisma.product.findMany({
             where: {
                 ...(search && {
                     name: {
@@ -230,7 +230,53 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
                 }),
                 ...(category && {
                     topCategory: {
-                        contains: category,
+                        equals: category,
+                        mode: "insensitive"
+                    }
+                }),
+                NOT: {
+                    userId: id,
+                }
+            },
+            include: {
+                user: true,
+            }
+        })
+
+        const sub_category_products = await prisma.product.findMany({
+            where: {
+                ...(search && {
+                    name: {
+                        contains: search,
+                        mode: "insensitive",
+                    }
+                }),
+                ...(category && {
+                    subCategory: {
+                        equals: category,
+                        mode: "insensitive"
+                    }
+                }),
+                NOT: {
+                    userId: id,
+                }
+            },
+            include: {
+                user: true,
+            }
+        })
+
+        const lowest_category_products = await prisma.product.findMany({
+            where: {
+                ...(search && {
+                    name: {
+                        contains: search,
+                        mode: "insensitive",
+                    }
+                }),
+                ...(category && {
+                    lowestCategory: {
+                        equals: category,
                         mode: "insensitive"
                     }
                 }),
@@ -245,30 +291,79 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
 
         let publicUrl;
 
-        for (const product of products) {
-            const [files] = await bucket.getFiles({
-                prefix: `${product.id}/`,
-            })
-            const firstFile = files[0];
-            if (!firstFile) {
-                return null;
+        if (top_category_products.length > 0) {
+            for (const product of top_category_products) {
+                const [files] = await bucket.getFiles({
+                    prefix: `${product.id}/`,
+                })
+                const firstFile = files[0];
+                if (!firstFile) {
+                    return null;
+                }
+
+                let imageURLs = [];
+                imageURLs.push(firstFile.publicUrl());
+
+                if (imageURLs.length === 0) {
+                    return res.status(404).json({ message: "No image found" });
+                }
+
+                listings.push({
+                    product,
+                    images: imageURLs,
+                })
             }
 
-            let imageURLs = [];
-            imageURLs.push(firstFile.publicUrl());
+            return res.status(200).json(listings);
+        } else if (sub_category_products.length > 0) {
+            for (const product of sub_category_products) {
+                const [files] = await bucket.getFiles({
+                    prefix: `${product.id}/`,
+                })
+                const firstFile = files[0];
+                if (!firstFile) {
+                    return null;
+                }
 
-            if (imageURLs.length === 0) {
-                return res.status(404).json({ message: "No image found" });
+                let imageURLs = [];
+                imageURLs.push(firstFile.publicUrl());
+
+                if (imageURLs.length === 0) {
+                    return res.status(404).json({ message: "No image found" });
+                }
+
+                listings.push({
+                    product,
+                    images: imageURLs,
+                })
             }
 
-            listings.push({
-                product,
-                images: imageURLs,
-            })
+            return res.status(200).json(listings);
+        } else if (lowest_category_products.length > 0) {
+            for (const product of lowest_category_products) {
+                const [files] = await bucket.getFiles({
+                    prefix: `${product.id}/`,
+                })
+                const firstFile = files[0];
+                if (!firstFile) {
+                    return null;
+                }
+
+                let imageURLs = [];
+                imageURLs.push(firstFile.publicUrl());
+
+                if (imageURLs.length === 0) {
+                    return res.status(404).json({ message: "No image found" });
+                }
+
+                listings.push({
+                    product,
+                    images: imageURLs,
+                })
+            }
+
+            return res.status(200).json(listings);
         }
-
-        return res.status(200).json(listings);
-
     } catch (error) {
         return res.status(500).json({ message: "Server error searching products" });
     }
