@@ -89,7 +89,14 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
 
 export const get_listing = async (req: Request, res: Response<ProductAndSellerResponseBody | MessageAndSuccessResponseBody>) => {
     try {
-        const product_id = req.params.id;
+        const product_id = req.body.id;
+
+        if (!product_id) {
+            return res.status(200).json({
+                message: "There is no product id.",
+                success: false,
+            })
+        }
 
         const product = await prisma.product.findUnique({
             where: {
@@ -141,7 +148,7 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
 
 export const get_all_listings = async (req: Request, res: Response<Listings>) => {
     try {
-        const user_id = req.params.id;
+        const user_id = req.body.id;
 
         const products: Product[] = await prisma.product.findMany({
             where: {
@@ -181,7 +188,7 @@ export const get_all_listings = async (req: Request, res: Response<Listings>) =>
 
 export const delete_listing = async (req: Request, res: Response<ListingResponseBody>) => {
     try {
-        const id = req.params.id;
+        const id = req.body.id;
 
         const product = await prisma.product.findUnique({
             where: {

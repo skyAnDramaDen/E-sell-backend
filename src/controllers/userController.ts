@@ -129,7 +129,7 @@ export const edit_user = async (req: Request, res: Response<EditUserResponseBody
 
 export const get_user = async (req: Request, res: Response<GetUserResponseBody>) => {
     try {
-        const {id} = req.params;
+        const {id} = req.body;
 
         const user = await prisma.user.findUnique({
             where: {id: id},
