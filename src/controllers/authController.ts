@@ -27,9 +27,6 @@ export const register_user = async (
     try {
         const { name, email, password } = req.body;
 
-        console.log("i am hitting th eregister reoute")
-        console.log(req.body);
-
         if (!name || !email || !password) {
             return res.status(200).json({
                 message: "Name, email or password missing",
@@ -55,35 +52,35 @@ export const register_user = async (
 
         let users_name = (name.trim().slice(0, 1).toUpperCase() + (name.trim().slice(1).toLowerCase()));
 
-        // const user = await prisma.user.create({
-        //     data: {
-        //         name: users_name,
-        //         email,
-        //         password: hashed_password,
-        //     }
-        // })
+        const user = await prisma.user.create({
+            data: {
+                name: users_name,
+                email,
+                password: hashed_password,
+            }
+        })
 
-        // const token = generate_token(user.id);
-        //
-        // const { password: _, ...safe_user } = user;
-        //
-        // let filtered_user;
-        //
-        // if (user.phoneNumber) {
-        //     filtered_user = {
-        //         id: user.id,
-        //         name: user.name,
-        //         email: user.email,
-        //         phoneNumber: user.phoneNumber,
-        //     }
-        // }
-        //
-        // return res.status(201).json({
-        //     message: "User has been created successfully",
-        //     user: filtered_user,
-        //     token,
-        //     success: true,
-        // })
+        const token = generate_token(user.id);
+
+        const { password: _, ...safe_user } = user;
+
+        let filtered_user;
+
+        if (user.phoneNumber) {
+            filtered_user = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+            }
+        }
+
+        return res.status(201).json({
+            message: "User has been created successfully",
+            user: filtered_user,
+            token,
+            success: true,
+        })
 
     } catch (error) {
         return res.status(501).json({
