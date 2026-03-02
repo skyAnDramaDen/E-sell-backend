@@ -60,19 +60,24 @@ export const register_user = async (
             }
         })
 
+        if (!user) {
+            return res.status(200).json({
+                message: "No user was created",
+                success: false,
+            })
+        }
+
+        console.log(user);
+
         const token = generate_token(user.id);
 
         const { password: _, ...safe_user } = user;
 
-        let filtered_user;
-
-        if (user.phoneNumber) {
-            filtered_user = {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                phoneNumber: user.phoneNumber,
-            }
+        let filtered_user = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phoneNumber: user.phoneNumber || "",
         }
 
         return res.status(201).json({
