@@ -1,12 +1,12 @@
 export interface RegisterRequestBody {
-    name: string;
+    username: string;
     email: string;
     password: string;
 }
 
 export interface UserDTO {
     id: string;
-    name: string;
+    username: string;
     email: string;
     phoneNumber: string;
 }
@@ -88,7 +88,7 @@ export type Products = Product[];
 
 export interface User {
     id: string;
-    name: string;
+    username?: string | null | undefined;
     email: string;
     password: string;
     role: "user" | "admin" | "moderator";

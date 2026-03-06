@@ -1,5 +1,5 @@
 import { Router } from "express";
-import prisma from"../config/dbClient.js";
+import prisma from "../config/dbClient.js";
 import { storage } from "../googleCloud.js";
 
 const router = Router();

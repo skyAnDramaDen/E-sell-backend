@@ -1,56 +1,10 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
-//  "compilerOptions": {
-//    "allowImportingTsExtensions": true,
-//    // File Layout
-//     "rootDir": "./src",
-//    // "outDir": "./dist",
-//
-//    // Environment Settings
-//    // See also https://aka.ms/tsconfig/module
-//    //changed the module from nodenext to commonjs and there was an issue
-////    "module": "commonjs",
-//    "module": "nodenext",
-//    "target": "esnext",
-//    "types": [],
-//    // For nodejs:
-//    // "lib": ["esnext"],
-//    // "types": ["node"],
-//    // and npm install -D @types/node
-//
-//    // Other Outputs
-//    "sourceMap": true,
-//    "declaration": true,
-//    "declarationMap": true,
-//
-//    // Stricter Typechecking Options
-//    "noUncheckedIndexedAccess": true,
-//    "exactOptionalPropertyTypes": true,
-//
-//    // Style Options
-//    // "noImplicitReturns": true,
-//    // "noImplicitOverride": true,
-//    // "noUnusedLocals": true,
-//    // "noUnusedParameters": true,
-//    // "noFallthroughCasesInSwitch": true,
-//    // "noPropertyAccessFromIndexSignature": true,
-//
-//    // Recommended Options
-//    "strict": true,
-//    "jsx": "react-jsx",
-//    //changed the below from true to false
-//    "verbatimModuleSyntax": false,
-//    "isolatedModules": true,
-//    "noUncheckedSideEffectImports": true,
-//    "moduleDetection": "force",
-//    "skipLibCheck": true,
-//  }
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
 
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "target": "es2022",
 
     "verbatimModuleSyntax": false,
@@ -60,37 +14,3 @@
   },
   "include": ["src"]
 }
-
-//
-//{
-//  "compilerOptions": {
-//    "rootDir": "./src",
-//    "outDir": "./dist",
-//
-//    "module": "NodeNext",
-//    "moduleResolution": "NodeNext",
-//    "target": "ES2020",
-//    "lib": ["ESNext"],
-//    "types": ["node"],
-//
-//
-//    "esModuleInterop": true,
-//    "allowSyntheticDefaultImports": true,
-//
-//
-//    "sourceMap": true,
-//    "declaration": true,
-//    "declarationMap": true,
-//
-//
-//    "noUncheckedIndexedAccess": true,
-//    "exactOptionalPropertyTypes": true,
-//
-//
-//    "strict": true,
-//    "jsx": "react-jsx",
-//    "isolatedModules": true,
-//    "skipLibCheck": true
-//  },
-//  "include": ["src"]
-//}

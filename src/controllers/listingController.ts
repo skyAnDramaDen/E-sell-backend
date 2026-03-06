@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
-import prisma from "../config/dbClient.js";
-import { bucket } from "../googleCloud.js";
-import { v4 as uuid } from "uuid";
+import prisma from "../config/dbClient";
+import { bucket } from "../googleCloud";
+// import { v4 as uuid } from "uuid";
+import { v4 as uuidv4 } from "uuid";
+
 import {
     RegisterRequestBody,
     AuthResponse,
@@ -13,15 +15,40 @@ import {
     Products,
     ProductAndSellerResponseBody,
     MessageAndSuccessResponseBody
-} from "../types/interfaces.js";
+} from "../types/interfaces";
 
 export const create_listing = async (req: Request, res: Response<ListingResponseBody | MessageAndSuccessResponseBody>) => {
     try {
+        if (
+            !req.body.name
+            ||
+            !req.body.description ||
+            !req.body.condition ||
+            !req.body.price ||
+            !req.body.userId ||
+            !req.body.subCategoryId ||
+            !req.body.topCategoryId ||
+            !req.body.location
+        )
+        {
+            return res.status(400).json({
+                message: "Request body is empty!",
+                success: false,
+            })
+        }
+
         req.body.price = Number(req.body.price);
 
         const product = await prisma.product.create({
             data: req.body,
         })
+
+        if (!product) {
+            return res.status(400).json({
+                message: "Failed to create product",
+                success: false,
+            })
+        }
 
         const files = req.files as Express.Multer.File[];
 
@@ -33,7 +60,7 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
         let imageUrls: string[] = [];
 
         for (const file of files) {
-            const fileName = `${product.id}/${uuid()}.jpg`;
+            const fileName = `${product.id}/${uuidv4()}.jpg`;
             let blob;
             try {
                 blob = bucket.file(fileName);
@@ -47,40 +74,40 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
                 success: false });
             }
 
-            try {
-                const stream = blob.createWriteStream({
-                    resumable: false,
-                    metadata: { contentType: file.mimetype },
-                });
-
-                await new Promise<void>((resolve, reject) => {
-                    stream.on("finish", resolve)
-                        .on("error", reject)
-                        .end(file.buffer);
-                });
-            } catch (error) {
-                await prisma.product.delete({
-                    where: {
-                        id: product.id,
-                    }
-                })
-                return res.status(500).json({ message: "Error uploading file",
-                success: false });
-            }
+            // try {
+            //     const stream = blob.createWriteStream({
+            //         resumable: false,
+            //         metadata: { contentType: file.mimetype },
+            //     });
+            //
+            //     await new Promise<void>((resolve, reject) => {
+            //         stream.on("finish", resolve)
+            //             .on("error", reject)
+            //             .end(file.buffer);
+            //     });
+            // } catch (error) {
+            //     await prisma.product.delete({
+            //         where: {
+            //             id: product.id,
+            //         }
+            //     })
+            //     return res.status(500).json({ message: "Error uploading file",
+            //     success: false });
+            // }
 
             // Make the uploaded file public
             // await blob.makePublic();
 
-            const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-            imageUrls.push(publicUrl);
+            // const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+            // imageUrls.push(publicUrl);
         }
 
-        return res.json({
+        return res.status(201).json({
             product: product,
             message: "The listing was created successfully"
         });
     } catch (error) {
-        return res.json({
+        return res.status(500).json({
             message: "There was a server error",
             success: false,
         })
@@ -92,7 +119,7 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
         const product_id = req.body.id;
 
         if (!product_id) {
-            return res.status(200).json({
+            return res.status(400).json({
                 message: "There is no product id.",
                 success: false,
             })
@@ -118,7 +145,16 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
             prefix: `${product_id}/`,
         })
 
-        const imageUrls = files.map(file => file.publicUrl());
+        if (files.length < 1 || undefined || !files) {
+            return res.status(400).json({
+                message: "There are no uploaded files",
+                success: false,
+            })
+        }
+
+        const imageUrls = files.map(file => {
+            return file.publicUrl();
+        });
 
         final_user = {
             id: product.id,
@@ -134,21 +170,32 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
             lowestCategoryId: product.lowestCategoryId,
             lowestCategory: product.lowestCategory,
             location: product.location,
-            sellerName: product.user.name,
+            sellerName: product.user.username,
             sellerPhoneNumber: product.user.phoneNumber ? product.user.phoneNumber : "",
             message: "Successfully fetching product and seller data",
             images: imageUrls,
             success: true,
         }
 
-        return res.status(200).json(final_user);
+        return res.status(201).json(final_user);
     } catch (error) {
+        return res.status(500).json({
+            message: "There was a server error",
+            success: false,
+        });
     }
 }
 
 export const get_all_listings = async (req: Request, res: Response<Listings>) => {
     try {
         const user_id = req.body.id;
+
+        if (!user_id) {
+            return res.status(400).json({
+                message: "There is no user id",
+                success: false,
+            })
+        }
 
         const products: Product[] = await prisma.product.findMany({
             where: {

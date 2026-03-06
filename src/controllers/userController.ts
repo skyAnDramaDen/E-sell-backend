@@ -16,7 +16,7 @@ import {
 } from "../types/interfaces.js";
 
 import { passwordsMatch, validatePassword } from "../utils/passwordVerifier.js";
-import argon2 from "argon2";
+import { hash } from "argon2";
 
 export const edit_user = async (req: Request, res: Response<EditUserResponseBody>) => {
     try {
@@ -80,10 +80,10 @@ export const edit_user = async (req: Request, res: Response<EditUserResponseBody
         }
 
         let users_name = (name.trim().slice(0, 1).toUpperCase() + (name.trim().slice(1).toLowerCase()));
-        if (user.name != users_name) {
+        if (user.username != users_name) {
             await prisma.user.update({
                 where: {id: id},
-                data: {name: users_name},
+                data: {username: users_name},
             });
         }
         let users_email = email.trim();
@@ -155,8 +155,6 @@ export const get_user = async (req: Request, res: Response<GetUserResponseBody>)
 export const change_user_password = async (req: Request, res: Response<MessageAndSuccessResponseBody>,) => {
     try {
         const { id, password1, password2 } = req.body;
-
-        console.log(id, password1, password2);
 
         const user = await prisma.user.findUnique({
             where: {
@@ -232,7 +230,7 @@ export const change_user_password = async (req: Request, res: Response<MessageAn
         }
 
         let usable_password = password1.trim();
-        const hashed_password = await argon2.hash(usable_password);
+        const hashed_password = await hash(usable_password);
 
         await prisma.user.update({
             where: {id: id},
