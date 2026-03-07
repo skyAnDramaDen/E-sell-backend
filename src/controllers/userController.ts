@@ -22,6 +22,12 @@ export const edit_user = async (req: Request, res: Response<EditUserResponseBody
     try {
     const {email, name, phoneNumber, id, } = req.body;
 
+    if ((!email && !name && !phoneNumber) && !id) {
+        return res.status(400).json({
+            success: false,
+        })
+    }
+
     const user = await prisma.user.findUnique({
         where: {
             id: id,

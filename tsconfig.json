@@ -7,6 +7,12 @@
     "moduleResolution": "node",
     "target": "es2022",
 
+    //This setting tells TypeScript: Allow me to import CommonJS modules as if they were ES modules.
+    "esModuleInterop": true,
+
+    //It tells TypeScript: Even if a module doesn’t have a default export, let me pretend it does.
+    "allowSyntheticDefaultImports": true,
+
     "verbatimModuleSyntax": false,
 
     "strict": true,

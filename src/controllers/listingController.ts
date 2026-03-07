@@ -204,8 +204,9 @@ export const get_all_listings = async (req: Request, res: Response<Listings>) =>
         })
 
         if (!products || products.length === 0) {
-            return res.status(404).json({ message: "You currently do not have any listings",
-            success: false,
+            return res.status(404).json({
+                message: "You currently do not have any listings",
+                success: false,
             });
         }
 
@@ -223,7 +224,8 @@ export const get_all_listings = async (req: Request, res: Response<Listings>) =>
                 images: imageURLs
             });
         }
-            return res.status(201).json(listings);
+
+        return res.status(201).json(listings);
 
     } catch (error) {
         return res.status(500).json({
@@ -233,9 +235,16 @@ export const get_all_listings = async (req: Request, res: Response<Listings>) =>
     }
 }
 
-export const delete_listing = async (req: Request, res: Response<ListingResponseBody>) => {
+export const delete_listing = async (req: Request, res: Response<ListingResponseBody | MessageAndSuccessResponseBody>) => {
     try {
         const id = req.body.id;
+
+        if (!id) {
+            return res.status(400).json({
+                message: "There is no id field in the request body",
+                success: false,
+            })
+        }
 
         const product = await prisma.product.findUnique({
             where: {
@@ -244,31 +253,40 @@ export const delete_listing = async (req: Request, res: Response<ListingResponse
         })
 
         if (!product) {
-            return res.status(404).json({ message: "Product not found" });
+            return res.status(404).json({ message: "Product not found",
+            success: false,});
         }
 
         const [files] = await bucket.getFiles({
             prefix: `${product.id}/`,
         })
 
-        await Promise.all(files.map(file => file.delete()));
+        if (files.length < 1 || undefined || !files) {
+            return res.status(400).json({
+                message: "There are no uploaded files",
+                success: false,
+            })
+        } else {
+            await Promise.all(files.map(file => file.delete()));
+        }
 
         await prisma.product.delete({ where: { id } });
-        return res.json({ success: true });
+        return res.status(201).json({ success: true });
     } catch (error) {
         return res.status(500).json({ message: "Failed to delete listing" });
     }
 }
 
-export const search_listings = async (req: Request, res: Response<Listings | { message: string }>) => {
+export const search_listings = async (req: Request, res: Response<Listings | MessageAndSuccessResponseBody>) => {
     try {
         const search = req.query.search as string;
         const category = req.query.category as string;
         const id = req.query.id as string;
 
         if (!search && !category) {
-            return res.status(404).json({
-                message: "Pls include the right params"
+            return res.status(400).json({
+                message: "Pls include the right params",
+                success: false,
             });
         }
 
@@ -343,14 +361,15 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
             }
         })
 
-        let publicUrl;
-
         if (top_category_products.length > 0) {
+
             for (const product of top_category_products) {
                 const [files] = await bucket.getFiles({
                     prefix: `${product.id}/`,
                 })
+
                 const firstFile = files[0];
+
                 if (!firstFile) {
                     return null;
                 }
@@ -359,7 +378,7 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
                 imageURLs.push(firstFile.publicUrl());
 
                 if (imageURLs.length === 0) {
-                    return res.status(404).json({ message: "No image found" });
+                    return res.status(404).json({ message: "No image found",success: false, });
                 }
 
                 listings.push({
@@ -368,7 +387,7 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
                 })
             }
 
-            return res.status(200).json(listings);
+            return res.status(201).json(listings);
         } else if (sub_category_products.length > 0) {
             for (const product of sub_category_products) {
                 const [files] = await bucket.getFiles({
@@ -383,7 +402,8 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
                 imageURLs.push(firstFile.publicUrl());
 
                 if (imageURLs.length === 0) {
-                    return res.status(404).json({ message: "No image found" });
+                    return res.status(404).json({ message: "No image found",
+                        success: false,});
                 }
 
                 listings.push({
@@ -407,7 +427,7 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
                 imageURLs.push(firstFile.publicUrl());
 
                 if (imageURLs.length === 0) {
-                    return res.status(404).json({ message: "No image found" });
+                    return res.status(404).json({ message: "No image found",success: false, });
                 }
 
                 listings.push({
@@ -415,10 +435,16 @@ export const search_listings = async (req: Request, res: Response<Listings | { m
                     images: imageURLs,
                 })
             }
-
-            return res.status(200).json(listings);
         }
+
+        let publicUrl;
+
+        return res.status(201).json(listings);
+
     } catch (error) {
-        return res.status(500).json({ message: "Server error searching products" });
+        return res.status(500).json({
+            message: "Server error searching products",
+            success: false,
+        });
     }
 }
