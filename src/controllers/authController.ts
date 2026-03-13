@@ -33,7 +33,7 @@ export const register_user = async (
             })
         }
 
-        const hashed_password = await hash(password);
+        const hashed_password = await hash(password.trim());
 
         let users_name = (username.trim().slice(0, 1).toUpperCase() + (username.trim().slice(1).toLowerCase()));
 
@@ -114,15 +114,11 @@ export const login_user = async (
             })
         }
 
-        let filtered_user;
-
-        if (user.phoneNumber) {
-            filtered_user = {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                phoneNumber: user.phoneNumber,
-            }
+        const filtered_user = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            phoneNumber: user.phoneNumber ? user.phoneNumber : "",
         }
 
         const token = generateToken(user.id);

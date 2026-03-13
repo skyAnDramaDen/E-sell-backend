@@ -20,9 +20,9 @@ import { hash } from "argon2";
 
 export const edit_user = async (req: Request, res: Response<EditUserResponseBody>) => {
     try {
-    const {email, name, phoneNumber, id, } = req.body;
+    const {email, username, phoneNumber, id, } = req.body;
 
-    if ((!email && !name && !phoneNumber) && !id) {
+    if ((!email && !username && !phoneNumber) && !id) {
         return res.status(400).json({
             success: false,
         })
@@ -85,10 +85,12 @@ export const edit_user = async (req: Request, res: Response<EditUserResponseBody
             }
         }
 
-        let users_name = (name.trim().slice(0, 1).toUpperCase() + (name.trim().slice(1).toLowerCase()));
+        let users_name = (username.trim().slice(0, 1).toUpperCase() + (username.trim().slice(1).toLowerCase()));
         if (user.username != users_name) {
             await prisma.user.update({
-                where: {id: id},
+                where: {
+                    id: id
+                },
                 data: {username: users_name},
             });
         }

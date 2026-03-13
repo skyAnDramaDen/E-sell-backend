@@ -17,7 +17,6 @@ router.get("/", async (req, res) => {
                 error: "There is no bucket",
             });
         } else {
-            console.log("There actually is a bucket name");
             const [exists] = await storage.bucket(bucketName).exists();
 
             if (!exists) throw new Error(`Bucket ${bucketName} not accessible`);

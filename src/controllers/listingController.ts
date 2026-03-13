@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../config/dbClient";
 import { bucket } from "../googleCloud";
-// import { v4 as uuid } from "uuid";
 import { v4 as uuidv4 } from "uuid";
 
 import {
@@ -171,6 +170,7 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
             lowestCategory: product.lowestCategory,
             location: product.location,
             sellerName: product.user.username,
+            sellerId: product.user.id,
             sellerPhoneNumber: product.user.phoneNumber ? product.user.phoneNumber : "",
             message: "Successfully fetching product and seller data",
             images: imageUrls,

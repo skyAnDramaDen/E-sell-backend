@@ -1,3 +1,5 @@
+import { ConversationType } from "@prisma/client";
+
 export interface RegisterRequestBody {
     username: string;
     email: string;
@@ -46,6 +48,7 @@ export interface ProductAndSellerResponseBody {
     lowestCategory?: string | null;
     location: string | null;
     sellerName: string;
+    sellerId: string;
     sellerPhoneNumber: string;
     message?: string;
     images: string[]
@@ -114,3 +117,43 @@ export interface EditUserPayload {
     user: UserDTO;
     formData: FormData;
 }
+
+export interface Message {
+    id: string;
+    content: string;
+    senderId: string;
+    conversationId: string;
+    read: boolean;
+    createdAt: Date;
+    sender?: User;
+    conversation?: Conversation;
+}
+
+export interface Conversation {
+    id: string;
+    type: ConversationType;
+    shopId?: string | undefined | null;
+    sellerId?: string | undefined | null;
+    createdAt: Date;
+    messages: Message[]
+    participant: ConversationParticipant[];
+}
+
+export interface ConversationParticipant {
+    id: string;
+    conversationId: string;
+    userId: string;
+    conversation?: Conversation;
+    name: string;
+    user?: User;
+}
+
+export type Conversations = Conversation[];
+export type ConversationParticipants = ConversationParticipant[];
+
+
+// export enum ConversationType {
+//     SELLER_BUYER = "SELLER_BUYER",
+//     SHOP_USER = "SHOP_USER",
+//     SUPPORT = "SUPPORT",
+// }

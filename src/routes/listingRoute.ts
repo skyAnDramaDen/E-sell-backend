@@ -5,8 +5,8 @@ import { upload } from "../middleware/upload.js";
 const router = express.Router();
 
 router.post("/add", upload.array("images", 7), create_listing);
-router.get("/:id", get_listing);
-router.get("/all_listings/:id", get_all_listings);
+router.post("/", get_listing);
+router.post("/all_listings", get_all_listings);
 router.delete("/:id", delete_listing)
 router.get("/", search_listings)
 
