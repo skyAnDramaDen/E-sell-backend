@@ -18,6 +18,7 @@ import {verifyToken} from "./utils/verifyToken";
 dotenv.config();
 
 const PORT = Number(process.env.PORT) || 3000;
+const ORIGIN_URL = process.env.ORIGIN_URL || "http://localhost:3000";
 
 const app = express();
 const server = http.createServer(app);
@@ -27,7 +28,7 @@ const io = new Server(server, {
         origin: [
             "http://localhost:19006",
             "http://localhost:8082",
-            "http://172.16.9.189:19006"
+            ORIGIN_URL
         ],
         methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
     }
@@ -38,7 +39,6 @@ let conversations: any[] = [];
 let messages: any[] = [];
 
 const onlineUsers: Map<number, Set<string>> = new Map();
-
 
 function addOnlineUser(userId: number, socketId: string) {
     if (!onlineUsers.has(userId)) {
@@ -87,7 +87,6 @@ io.use((socket, next) => {
     }
 });
 
-
 io.on("connection", (socket) => {
 
     const user = (socket as any).user;
@@ -113,22 +112,14 @@ io.on("connection", (socket) => {
         const room = `conversation_${conversationId}`;
 
         socket.leave(room);
-    });
+    })
 
     socket.on("send_message", (data) => {
-        const { conversationId, message } = data;
+        const { message } = data;
 
-        const newMessage = {
-            id: messages.length + 1,
-            conversationId,
-            senderId: user_id,
-            message,
-            createdAt: new Date()
-        };
+        messages.push(message);
 
-        messages.push(newMessage);
-
-        io.to(`conversation_${conversationId}`).emit("receive_message", newMessage);
+        io.to(`conversation_${message.conversationId}`).emit("receive_message", message);
     });
 
     socket.on("typing", (conversationId: number) => {
@@ -145,13 +136,11 @@ io.on("connection", (socket) => {
             });
     });
 
-
     socket.on("disconnect", () => {
         removeOnlineUser(user_id, socket.id);
 
         emitOnlineUsers(io);
     });
-
 });
 
 app.use(cors(

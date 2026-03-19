@@ -277,13 +277,11 @@ export const delete_listing = async (req: Request, res: Response<ListingResponse
     }
 }
 
-export const search_listings = async (req: Request, res: Response<Listings | MessageAndSuccessResponseBody>) => {
+export const search_listings_by_search_params = async (req: Request, res: Response<Listings | MessageAndSuccessResponseBody>) => {
     try {
-        const search = req.query.search as string;
-        const category = req.query.category as string;
-        const id = req.query.id as string;
+        const { search, id } = req.body.payload;
 
-        if (!search && !category) {
+        if (!search || !id) {
             return res.status(400).json({
                 message: "Pls include the right params",
                 success: false,
@@ -292,18 +290,12 @@ export const search_listings = async (req: Request, res: Response<Listings | Mes
 
         let listings: { product: Product, images: string[] }[] = [];
 
-        const top_category_products = await prisma.product.findMany({
+        const all_available_listings = await prisma.product.findMany({
             where: {
                 ...(search && {
                     name: {
                         contains: search,
                         mode: "insensitive",
-                    }
-                }),
-                ...(category && {
-                    topCategory: {
-                        equals: category,
-                        mode: "insensitive"
                     }
                 }),
                 NOT: {
@@ -315,55 +307,9 @@ export const search_listings = async (req: Request, res: Response<Listings | Mes
             }
         })
 
-        const sub_category_products = await prisma.product.findMany({
-            where: {
-                ...(search && {
-                    name: {
-                        contains: search,
-                        mode: "insensitive",
-                    }
-                }),
-                ...(category && {
-                    subCategory: {
-                        equals: category,
-                        mode: "insensitive"
-                    }
-                }),
-                NOT: {
-                    userId: id,
-                }
-            },
-            include: {
-                user: true,
-            }
-        })
+        if (all_available_listings.length > 0) {
 
-        const lowest_category_products = await prisma.product.findMany({
-            where: {
-                ...(search && {
-                    name: {
-                        contains: search,
-                        mode: "insensitive",
-                    }
-                }),
-                ...(category && {
-                    lowestCategory: {
-                        equals: category,
-                        mode: "insensitive"
-                    }
-                }),
-                NOT: {
-                    userId: id,
-                }
-            },
-            include: {
-                user: true,
-            }
-        })
-
-        if (top_category_products.length > 0) {
-
-            for (const product of top_category_products) {
+            for (const product of all_available_listings) {
                 const [files] = await bucket.getFiles({
                     prefix: `${product.id}/`,
                 })
@@ -388,6 +334,112 @@ export const search_listings = async (req: Request, res: Response<Listings | Mes
             }
 
             return res.status(201).json(listings);
+        }
+
+
+        let publicUrl;
+
+        return res.status(201).json(listings);
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Server error searching products",
+            success: false,
+        });
+    }
+}
+
+export const search_listings_by_category = async (req: Request, res: Response<Listings | MessageAndSuccessResponseBody>) => {
+    try {
+        const {category, id} = req.body.payload;
+
+        if (!id && !category) {
+            return res.status(400).json({
+                message: "Pls include the right params",
+                success: false,
+            });
+        }
+
+        let listings: { product: Product, images: string[] }[] = [];
+
+        const top_category_products = await prisma.product.findMany({
+            where: {
+                ...(category && {
+                    topCategory: {
+                        equals: category,
+                        mode: "insensitive"
+                    }
+                }),
+                NOT: {
+                    userId: id,
+                }
+            },
+            include: {
+                user: true,
+            }
+        })
+
+        const sub_category_products = await prisma.product.findMany({
+            where: {
+                ...(category && {
+                    subCategory: {
+                        equals: category,
+                        mode: "insensitive"
+                    }
+                }),
+                NOT: {
+                    userId: id,
+                }
+            },
+            include: {
+                user: true,
+            }
+        })
+
+        const lowest_category_products = await prisma.product.findMany({
+            where: {
+                ...(category && {
+                    lowestCategory: {
+                        equals: category,
+                        mode: "insensitive"
+                    }
+                }),
+                NOT: {
+                    userId: id,
+                }
+            },
+            include: {
+                user: true,
+            }
+        })
+
+
+        if (top_category_products.length > 0) {
+            for (const product of top_category_products) {
+                const [files] = await bucket.getFiles({
+                    prefix: `${product.id}/`,
+                })
+
+                const firstFile = files[0];
+
+                if (!firstFile) {
+                    return null;
+                }
+
+                let imageURLs = [];
+                imageURLs.push(firstFile.publicUrl());
+
+                if (imageURLs.length === 0) {
+                    return res.status(404).json({message: "No image found", success: false,});
+                }
+
+                listings.push({
+                    product,
+                    images: imageURLs,
+                })
+            }
+
+            return res.status(201).json(listings);
         } else if (sub_category_products.length > 0) {
             for (const product of sub_category_products) {
                 const [files] = await bucket.getFiles({
@@ -402,8 +454,10 @@ export const search_listings = async (req: Request, res: Response<Listings | Mes
                 imageURLs.push(firstFile.publicUrl());
 
                 if (imageURLs.length === 0) {
-                    return res.status(404).json({ message: "No image found",
-                        success: false,});
+                    return res.status(404).json({
+                        message: "No image found",
+                        success: false,
+                    });
                 }
 
                 listings.push({
@@ -427,7 +481,7 @@ export const search_listings = async (req: Request, res: Response<Listings | Mes
                 imageURLs.push(firstFile.publicUrl());
 
                 if (imageURLs.length === 0) {
-                    return res.status(404).json({ message: "No image found",success: false, });
+                    return res.status(404).json({message: "No image found", success: false,});
                 }
 
                 listings.push({
@@ -435,12 +489,10 @@ export const search_listings = async (req: Request, res: Response<Listings | Mes
                     images: imageURLs,
                 })
             }
+
         }
 
-        let publicUrl;
-
         return res.status(201).json(listings);
-
     } catch (error) {
         return res.status(500).json({
             message: "Server error searching products",
