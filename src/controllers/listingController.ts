@@ -272,6 +272,7 @@ export const delete_listing = async (req: Request, res: Response<ListingResponse
         await prisma.product.delete({ where: { id } });
         return res.status(201).json({ success: true });
     } catch (error) {
+        console.log("there has been an error");
         return res.status(500).json({ message: "Failed to delete listing" });
     }
 }

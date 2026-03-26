@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/add", upload.array("images", 7), create_listing);
 router.post("/", get_listing);
 router.post("/all_listings", get_all_listings);
-router.delete("/:id", delete_listing)
+router.post("/delete_listing", delete_listing)
 router.post("/search_listings_by_search_params", search_listings_by_search_params)
 router.post("/search_listings_by_category", search_listings_by_category)
 
