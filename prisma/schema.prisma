@@ -80,7 +80,6 @@ model ConversationParticipant {
   user           User         @relation(fields: [userId], references: [id])
 }
 
-
 enum ConversationType {
   SELLER_BUYER
   SHOP_USER

@@ -19,8 +19,7 @@ import {
 export const create_listing = async (req: Request, res: Response<ListingResponseBody | MessageAndSuccessResponseBody>) => {
     try {
         if (
-            !req.body.name
-            ||
+            !req.body.name ||
             !req.body.description ||
             !req.body.condition ||
             !req.body.price ||
@@ -73,32 +72,32 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
                 success: false });
             }
 
-            // try {
-            //     const stream = blob.createWriteStream({
-            //         resumable: false,
-            //         metadata: { contentType: file.mimetype },
-            //     });
-            //
-            //     await new Promise<void>((resolve, reject) => {
-            //         stream.on("finish", resolve)
-            //             .on("error", reject)
-            //             .end(file.buffer);
-            //     });
-            // } catch (error) {
-            //     await prisma.product.delete({
-            //         where: {
-            //             id: product.id,
-            //         }
-            //     })
-            //     return res.status(500).json({ message: "Error uploading file",
-            //     success: false });
-            // }
+            try {
+                const stream = blob.createWriteStream({
+                    resumable: false,
+                    metadata: { contentType: file.mimetype },
+                });
+
+                await new Promise<void>((resolve, reject) => {
+                    stream.on("finish", resolve)
+                        .on("error", reject)
+                        .end(file.buffer);
+                });
+            } catch (error) {
+                await prisma.product.delete({
+                    where: {
+                        id: product.id,
+                    }
+                })
+                return res.status(500).json({ message: "Error uploading file",
+                success: false });
+            }
 
             // Make the uploaded file public
             // await blob.makePublic();
 
-            // const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-            // imageUrls.push(publicUrl);
+            const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+            imageUrls.push(publicUrl);
         }
 
         return res.status(201).json({
@@ -115,9 +114,9 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
 
 export const get_listing = async (req: Request, res: Response<ProductAndSellerResponseBody | MessageAndSuccessResponseBody>) => {
     try {
-        const product_id = req.body.id;
+        const { id } = req.body;
 
-        if (!product_id) {
+        if (!id) {
             return res.status(400).json({
                 message: "There is no product id.",
                 success: false,
@@ -126,7 +125,7 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
 
         const product = await prisma.product.findUnique({
             where: {
-                id: product_id,
+                id: id,
             },
             include: {
                 user: true,
@@ -141,7 +140,7 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
         }
 
         const [files] = await bucket.getFiles({
-            prefix: `${product_id}/`,
+            prefix: `${id}/`,
         })
 
         if (files.length < 1 || undefined || !files) {
@@ -172,7 +171,7 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
             sellerName: product.user.username,
             sellerId: product.user.id,
             sellerPhoneNumber: product.user.phoneNumber ? product.user.phoneNumber : "",
-            message: "Successfully fetching product and seller data",
+            message: "Successfully fetched product and seller data",
             images: imageUrls,
             success: true,
         }

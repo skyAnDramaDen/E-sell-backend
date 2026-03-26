@@ -33,6 +33,7 @@ const io = new Server(server, {
         methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
     }
 });
+
 const secret = process.env.JWT_SECRET || "";
 
 let conversations: any[] = [];
