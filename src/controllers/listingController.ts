@@ -4,14 +4,9 @@ import { bucket } from "../googleCloud";
 import { v4 as uuidv4 } from "uuid";
 
 import {
-    RegisterRequestBody,
-    AuthResponse,
-    UserDTO,
-    LoginRequestBody,
     Product,
     ListingResponseBody,
     Listings,
-    Products,
     ProductAndSellerResponseBody,
     MessageAndSuccessResponseBody
 } from "../types/interfaces";
@@ -55,8 +50,6 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
             success: false });
         }
 
-        let imageUrls: string[] = [];
-
         for (const file of files) {
             const fileName = `${product.id}/${uuidv4()}.jpg`;
             let blob;
@@ -96,8 +89,6 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
             // Make the uploaded file public
             // await blob.makePublic();
 
-            const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-            imageUrls.push(publicUrl);
         }
 
         return res.status(201).json({
@@ -272,7 +263,6 @@ export const delete_listing = async (req: Request, res: Response<ListingResponse
         await prisma.product.delete({ where: { id } });
         return res.status(201).json({ success: true });
     } catch (error) {
-        console.log("there has been an error");
         return res.status(500).json({ message: "Failed to delete listing" });
     }
 }
@@ -336,8 +326,6 @@ export const search_listings_by_search_params = async (req: Request, res: Respon
             return res.status(201).json(listings);
         }
 
-
-        let publicUrl;
 
         return res.status(201).json(listings);
 
@@ -412,7 +400,6 @@ export const search_listings_by_category = async (req: Request, res: Response<Li
                 user: true,
             }
         })
-
 
         if (top_category_products.length > 0) {
             for (const product of top_category_products) {
@@ -489,7 +476,6 @@ export const search_listings_by_category = async (req: Request, res: Response<Li
                     images: imageURLs,
                 })
             }
-
         }
 
         return res.status(201).json(listings);
