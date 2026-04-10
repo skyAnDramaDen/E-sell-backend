@@ -6,7 +6,7 @@ import {
 } from "../types/interfaces";
 import {ConversationType} from "@prisma/client";
 
-export const get_all_conversations = async (req: Request, res: Response<Conversations | MessageAndSuccessResponseBody>) => {
+export const getAllConversations = async (req: Request, res: Response<Conversations | MessageAndSuccessResponseBody>) => {
     try {
         const id = req.body.id;
 
@@ -48,7 +48,7 @@ export const get_all_conversations = async (req: Request, res: Response<Conversa
     }
 }
 
-export const get_conversation = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody>) => {
+export const getConversation = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody>) => {
     try {
         const conversationId = req.body.conversationId;
 
@@ -85,7 +85,7 @@ export const get_conversation = async (req: Request, res: Response<Conversation 
     }
 }
 
-export const create_conversation = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody>) => {
+export const createConversation = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody>) => {
     try {
         const { type } = req.body.payload;
 
@@ -141,7 +141,7 @@ export const create_conversation = async (req: Request, res: Response<Conversati
     }
 }
 
-export const get_conversation_by_participants_id = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody>) => {
+export const getConversationByParticipantsId = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody>) => {
     try {
         const { buyerId, sellerId } = req.body;
 

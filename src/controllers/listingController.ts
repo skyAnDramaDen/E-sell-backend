@@ -11,7 +11,7 @@ import {
     MessageAndSuccessResponseBody
 } from "../types/interfaces";
 
-export const create_listing = async (req: Request, res: Response<ListingResponseBody | MessageAndSuccessResponseBody>) => {
+export const createListing = async (req: Request, res: Response<ListingResponseBody | MessageAndSuccessResponseBody>) => {
     try {
         if (
             !req.body.name ||
@@ -103,7 +103,7 @@ export const create_listing = async (req: Request, res: Response<ListingResponse
     }
 }
 
-export const get_listing = async (req: Request, res: Response<ProductAndSellerResponseBody | MessageAndSuccessResponseBody>) => {
+export const getListing = async (req: Request, res: Response<ProductAndSellerResponseBody | MessageAndSuccessResponseBody>) => {
     try {
         const { id } = req.body;
 
@@ -176,7 +176,7 @@ export const get_listing = async (req: Request, res: Response<ProductAndSellerRe
     }
 }
 
-export const get_all_listings = async (req: Request, res: Response<Listings>) => {
+export const getAllListings = async (req: Request, res: Response<Listings>) => {
     try {
         const user_id = req.body.id;
 
@@ -225,7 +225,7 @@ export const get_all_listings = async (req: Request, res: Response<Listings>) =>
     }
 }
 
-export const delete_listing = async (req: Request, res: Response<ListingResponseBody | MessageAndSuccessResponseBody>) => {
+export const deleteListing = async (req: Request, res: Response<ListingResponseBody | MessageAndSuccessResponseBody>) => {
     try {
         const id = req.body.id;
 
@@ -267,7 +267,7 @@ export const delete_listing = async (req: Request, res: Response<ListingResponse
     }
 }
 
-export const search_listings_by_search_params = async (req: Request, res: Response<Listings | MessageAndSuccessResponseBody>) => {
+export const searchListingsBySearchParams = async (req: Request, res: Response<Listings | MessageAndSuccessResponseBody>) => {
     try {
         const { search, id } = req.body.payload;
 
@@ -337,11 +337,11 @@ export const search_listings_by_search_params = async (req: Request, res: Respon
     }
 }
 
-export const search_listings_by_category = async (req: Request, res: Response<Listings | MessageAndSuccessResponseBody>) => {
+export const searchListingsByCategory = async (req: Request, res: Response<Listings | MessageAndSuccessResponseBody>) => {
     try {
         const {category, id} = req.body.payload;
 
-        if (!id && !category) {
+        if (!id || !category) {
             return res.status(400).json({
                 message: "Pls include the right params",
                 success: false,

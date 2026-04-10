@@ -6,7 +6,7 @@ import {generateToken} from "../utils/generateToken";
 
 import { RegisterRequestBody, AuthResponse, UserDTO, LoginRequestBody } from "../types/interfaces.js";
 
-export const register_user = async (
+export const registerUser = async (
     req: Request<{}, {}, RegisterRequestBody>,
     res: Response<AuthResponse>
 ) => {
@@ -78,7 +78,7 @@ export const register_user = async (
     }
 }
 
-export const login_user = async (
+export const loginUser = async (
     req: Request<{}, {}, LoginRequestBody>,
     res: Response<AuthResponse>
 )=> {
@@ -94,7 +94,7 @@ export const login_user = async (
 
         const user = await prisma.user.findUnique({
             where: {
-                email: email
+                email: email.toLowerCase()
             }
         })
 
@@ -139,6 +139,6 @@ export const login_user = async (
     }
 }
 
-export const logout_user = async (req: Request, res: Response) => {
+export const logoutUser = async (req: Request, res: Response) => {
 
 }

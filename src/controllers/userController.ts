@@ -18,7 +18,7 @@ import {
 import { passwordsMatch, validatePassword } from "../utils/passwordVerifier.js";
 import { hash } from "argon2";
 
-export const edit_user = async (req: Request, res: Response<EditUserResponseBody>) => {
+export const editUser = async (req: Request, res: Response<EditUserResponseBody>) => {
     try {
     const {email, username, phoneNumber, id, } = req.body;
 
@@ -135,7 +135,7 @@ export const edit_user = async (req: Request, res: Response<EditUserResponseBody
 }
 }
 
-export const get_user = async (req: Request, res: Response<GetUserResponseBody>) => {
+export const getUser = async (req: Request, res: Response<GetUserResponseBody>) => {
     try {
         const {id} = req.body;
 
@@ -160,7 +160,7 @@ export const get_user = async (req: Request, res: Response<GetUserResponseBody>)
     }
 }
 
-export const change_user_password = async (req: Request, res: Response<MessageAndSuccessResponseBody>,) => {
+export const changeUserPassword = async (req: Request, res: Response<MessageAndSuccessResponseBody>,) => {
     try {
         const { id, password1, password2 } = req.body;
 

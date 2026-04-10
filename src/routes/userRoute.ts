@@ -1,12 +1,11 @@
 import express from "express";
-import {edit_user, get_user, change_user_password} from "../controllers/userController.js";
-import {delete_listing} from "../controllers/listingController.js";
+import {editUser, getUser, changeUserPassword} from "../controllers/userController.js";
 import {upload} from "../middleware/upload.js";
 
 const router = express.Router();
 
-router.post("/edit",upload.array("image", 2), edit_user);
-router.post("/", get_user);
-router.post("/change_user_password", change_user_password)
+router.post("/edit",upload.array("image", 2), editUser);
+router.post("/", getUser);
+router.post("/change_user_password", changeUserPassword)
 
 export default router;

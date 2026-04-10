@@ -4,20 +4,10 @@ import { bucket } from "../googleCloud";
 import { v4 as uuidv4 } from "uuid";
 
 import {
-    RegisterRequestBody,
-    AuthResponse,
-    UserDTO,
-    LoginRequestBody,
-    Product,
-    ListingResponseBody,
-    Listings,
-    Products,
-    ProductAndSellerResponseBody,
-    MessageAndSuccessResponseBody, Conversations, Conversation, ConversationParticipants
+    MessageAndSuccessResponseBody, ConversationParticipants
 } from "../types/interfaces";
-import messageRoute from "../routes/messageRoute";
 
-export const add_participants = async (req: Request, res: Response<ConversationParticipants | MessageAndSuccessResponseBody>) => {
+export const addParticipants = async (req: Request, res: Response<ConversationParticipants | MessageAndSuccessResponseBody>) => {
     try {
         const sender = req.body[0];
         const receiver = req.body[1];

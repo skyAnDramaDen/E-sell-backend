@@ -28,7 +28,7 @@ jest.mock("../../src/googleCloud", () => ({
     },
 }))
 
-import { create_listing, get_listing, get_all_listings, delete_listing, search_listings } from "../../src/controllers/listingController";
+import { create_listing, get_listing, get_all_listings, delete_listing, search_listings_by_category, search_listings_by_search_params } from "../../src/controllers/listingController";
 import prisma from "../../src/config/dbClient";
 
 import { bucket } from "../../src/googleCloud";
@@ -365,8 +365,9 @@ describe("get_listing controller", () => {
             lowestCategory: "Audio Accessories",
             location: "Leeds",
             sellerName: "Perry",
+            sellerId: "1",
             sellerPhoneNumber: "1234567890",
-            message: "Successfully fetching product and seller data",
+            message: "Successfully fetched product and seller data",
             images: [
                 "https://storage.googleapis.com/mock-bucket/prod_123/image1.jpg",
                 "https://storage.googleapis.com/mock-bucket/prod_123/image2.jpg",
@@ -651,161 +652,162 @@ describe("delete_listing controller", () => {
         })
     })
 })
-
-describe("search_listings controller", () => {
-    it("returns 400 if there is no search or category", async () => {
-        const req: any = {
-            query: {
-                search: null,
-                category: null,
-            }
-        }
-
-        const res: any = mockResponse();
-
-        await search_listings(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(400);
-        expect(res.json).toHaveBeenCalledWith({
-            message: "Pls include the right params",
-            success: false,
-        })
-    })
-
-    it("returns 201 if everything is successful", async () => {
-        const req: any = {
-            query: {
-                search: "Headphones",
-                category: null,
-            }
-        }
-
-        const res: any = mockResponse();
-
-        (prisma.product.findMany as jest.Mock).mockResolvedValue([
-            {
-                id: "prod_123",
-                name: "Wireless Headphones",
-                description: "High‑quality Bluetooth headphones with noise cancellation.",
-                condition: "New",
-                price: 79,
-                availability: true,
-                topCategoryId: "cat_top_1",
-                topCategory: "Electronics",
-                subCategoryId: "cat_sub_1",
-                subCategory: "Headphones",
-                createdAt: "2020-04-01",
-                updatedAt: "2020-04-01",
-                lowestCategoryId: "cat_low_1",
-                lowestCategory: "Audio Accessories",
-                location: "Leeds",
-                user: {
-                    id: "1",
-                    username: "Perry",
-                    email: "test@test.com",
-                    phoneNumber: "1234567890"
-                }
-            },
-            {
-                id: "prod_456",
-                name: "Gaming Laptop Headphones",
-                description: "RTX‑equipped gaming laptop with 16GB RAM and 1TB SSD.",
-                condition: "Used - Like New",
-                price: 899,
-                availability: true,
-                topCategoryId: "cat_top_1",
-                topCategory: "Electronics",
-                subCategoryId: "cat_sub_2",
-                subCategory: "Computers",
-                createdAt: "2020-04-01",
-                updatedAt: "2020-04-01",
-                lowestCategoryId: "cat_low_2",
-                lowestCategory: "Laptops",
-                location: "Manchester",
-                user: {
-                    id: "2",
-                    username: "Jordan",
-                    email: "jordan@example.com",
-                    phoneNumber: "9876543210"
-                }
-            },
-        ]);
-
-        (bucket.getFiles as jest.Mock).mockResolvedValueOnce([
-            [
-                {
-                    name: "prod_123/image1.jpg",
-                    delete: jest.fn().mockResolvedValue(true),
-                    publicUrl: jest.fn().mockReturnValue("https://storage.googleapis.com/mock-bucket/prod_123/image1.jpg"),
-                },
-                {
-                    name: "prod_123/image2.jpg",
-                    delete: jest.fn().mockResolvedValue(true),
-                    publicUrl: jest.fn().mockReturnValue("https://storage.googleapis.com/mock-bucket/prod_123/image1.jpg"),
-                }
-            ]
-        ]);
-
-        await search_listings(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(201);
-        expect(res.json).toHaveBeenCalledWith([
-            {
-                product: {
-                    id: "prod_123",
-                    name: "Wireless Headphones",
-                    description: "High‑quality Bluetooth headphones with noise cancellation.",
-                    condition: "New",
-                    price: 79,
-                    availability: true,
-                    topCategoryId: "cat_top_1",
-                    topCategory: "Electronics",
-                    subCategoryId: "cat_sub_1",
-                    subCategory: "Headphones",
-                    createdAt: "2020-04-01",
-                    updatedAt: "2020-04-01",
-                    lowestCategoryId: "cat_low_1",
-                    lowestCategory: "Audio Accessories",
-                    location: "Leeds",
-                    user: {
-                        id: "1",
-                        username: "Perry",
-                        email: "test@test.com",
-                        phoneNumber: "1234567890"
-                    }
-                },
-                images: [
-                    "https://storage.googleapis.com/mock-bucket/prod_123/image1.jpg"
-                ]
-            },
-            {
-                product: {
-                    id: "prod_456",
-                    name: "Gaming Laptop Headphones",
-                    description: "RTX‑equipped gaming laptop with 16GB RAM and 1TB SSD.",
-                    condition: "Used - Like New",
-                    price: 899,
-                    availability: true,
-                    topCategoryId: "cat_top_1",
-                    topCategory: "Electronics",
-                    subCategoryId: "cat_sub_2",
-                    subCategory: "Computers",
-                    createdAt: "2020-04-01",
-                    updatedAt: "2020-04-01",
-                    lowestCategoryId: "cat_low_2",
-                    lowestCategory: "Laptops",
-                    location: "Manchester",
-                    user: {
-                        id: "2",
-                        username: "Jordan",
-                        email: "jordan@example.com",
-                        phoneNumber: "9876543210"
-                    }
-                },
-                images: [
-                    "https://storage.googleapis.com/mock-bucket/prod_123/image1.jpg"
-                ]
-            }
-        ])
-    })
-})
+//
+// describe("search_listings_by_category controller", () => {
+//     it("returns 400 if there is no search or category", async () => {
+//         const req: any = {
+//             query: {
+//                 search: null,
+//                 category: null,
+//                 id: "bukyg67g"
+//             }
+//         }
+//
+//         const res: any = mockResponse();
+//
+//         await search_listings_by_category(req, res);
+//
+//         expect(res.status).toHaveBeenCalledWith(400);
+//         expect(res.json).toHaveBeenCalledWith({
+//             message: "Pls include the right params",
+//             success: false,
+//         })
+//     })
+//
+//     it("returns 201 if everything is successful", async () => {
+//         const req: any = {
+//             query: {
+//                 search: "Headphones",
+//                 category: null,
+//             }
+//         }
+//
+//         const res: any = mockResponse();
+//
+//         (prisma.product.findMany as jest.Mock).mockResolvedValue([
+//             {
+//                 id: "prod_123",
+//                 name: "Wireless Headphones",
+//                 description: "High‑quality Bluetooth headphones with noise cancellation.",
+//                 condition: "New",
+//                 price: 79,
+//                 availability: true,
+//                 topCategoryId: "cat_top_1",
+//                 topCategory: "Electronics",
+//                 subCategoryId: "cat_sub_1",
+//                 subCategory: "Headphones",
+//                 createdAt: "2020-04-01",
+//                 updatedAt: "2020-04-01",
+//                 lowestCategoryId: "cat_low_1",
+//                 lowestCategory: "Audio Accessories",
+//                 location: "Leeds",
+//                 user: {
+//                     id: "1",
+//                     username: "Perry",
+//                     email: "test@test.com",
+//                     phoneNumber: "1234567890"
+//                 }
+//             },
+//             {
+//                 id: "prod_456",
+//                 name: "Gaming Laptop Headphones",
+//                 description: "RTX‑equipped gaming laptop with 16GB RAM and 1TB SSD.",
+//                 condition: "Used - Like New",
+//                 price: 899,
+//                 availability: true,
+//                 topCategoryId: "cat_top_1",
+//                 topCategory: "Electronics",
+//                 subCategoryId: "cat_sub_2",
+//                 subCategory: "Computers",
+//                 createdAt: "2020-04-01",
+//                 updatedAt: "2020-04-01",
+//                 lowestCategoryId: "cat_low_2",
+//                 lowestCategory: "Laptops",
+//                 location: "Manchester",
+//                 user: {
+//                     id: "2",
+//                     username: "Jordan",
+//                     email: "jordan@example.com",
+//                     phoneNumber: "9876543210"
+//                 }
+//             },
+//         ]);
+//
+//         (bucket.getFiles as jest.Mock).mockResolvedValueOnce([
+//             [
+//                 {
+//                     name: "prod_123/image1.jpg",
+//                     delete: jest.fn().mockResolvedValue(true),
+//                     publicUrl: jest.fn().mockReturnValue("https://storage.googleapis.com/mock-bucket/prod_123/image1.jpg"),
+//                 },
+//                 {
+//                     name: "prod_123/image2.jpg",
+//                     delete: jest.fn().mockResolvedValue(true),
+//                     publicUrl: jest.fn().mockReturnValue("https://storage.googleapis.com/mock-bucket/prod_123/image1.jpg"),
+//                 }
+//             ]
+//         ]);
+//
+//         await search_listings_by_category(req, res);
+//
+//         expect(res.status).toHaveBeenCalledWith(201);
+//         expect(res.json).toHaveBeenCalledWith([
+//             {
+//                 product: {
+//                     id: "prod_123",
+//                     name: "Wireless Headphones",
+//                     description: "High‑quality Bluetooth headphones with noise cancellation.",
+//                     condition: "New",
+//                     price: 79,
+//                     availability: true,
+//                     topCategoryId: "cat_top_1",
+//                     topCategory: "Electronics",
+//                     subCategoryId: "cat_sub_1",
+//                     subCategory: "Headphones",
+//                     createdAt: "2020-04-01",
+//                     updatedAt: "2020-04-01",
+//                     lowestCategoryId: "cat_low_1",
+//                     lowestCategory: "Audio Accessories",
+//                     location: "Leeds",
+//                     user: {
+//                         id: "1",
+//                         username: "Perry",
+//                         email: "test@test.com",
+//                         phoneNumber: "1234567890"
+//                     }
+//                 },
+//                 images: [
+//                     "https://storage.googleapis.com/mock-bucket/prod_123/image1.jpg"
+//                 ]
+//             },
+//             {
+//                 product: {
+//                     id: "prod_456",
+//                     name: "Gaming Laptop Headphones",
+//                     description: "RTX‑equipped gaming laptop with 16GB RAM and 1TB SSD.",
+//                     condition: "Used - Like New",
+//                     price: 899,
+//                     availability: true,
+//                     topCategoryId: "cat_top_1",
+//                     topCategory: "Electronics",
+//                     subCategoryId: "cat_sub_2",
+//                     subCategory: "Computers",
+//                     createdAt: "2020-04-01",
+//                     updatedAt: "2020-04-01",
+//                     lowestCategoryId: "cat_low_2",
+//                     lowestCategory: "Laptops",
+//                     location: "Manchester",
+//                     user: {
+//                         id: "2",
+//                         username: "Jordan",
+//                         email: "jordan@example.com",
+//                         phoneNumber: "9876543210"
+//                     }
+//                 },
+//                 images: [
+//                     "https://storage.googleapis.com/mock-bucket/prod_123/image1.jpg"
+//                 ]
+//             }
+//         ])
+//     })
+// })

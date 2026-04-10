@@ -5,7 +5,7 @@ import {
 } from "../types/interfaces";
 import {Message} from "@prisma/client";
 
-export const send_message = async (req: Request, res: Response<Message | MessageAndSuccessResponseBody>) => {
+export const sendMessage = async (req: Request, res: Response<Message | MessageAndSuccessResponseBody>) => {
     try {
         const { message } = req.body;
 
