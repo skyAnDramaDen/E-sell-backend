@@ -85,13 +85,6 @@ export const loginUser = async (
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({
-                message: "User email or password is missing",
-                success: false,
-            })
-        }
-
         const user = await prisma.user.findUnique({
             where: {
                 email: email.toLowerCase()
@@ -99,7 +92,7 @@ export const loginUser = async (
         })
 
         if (!user) {
-            return res.status(400).json({
+            return res.status(404).json({
                 message: "User not found!",
                 success: false,
             })
@@ -125,7 +118,7 @@ export const loginUser = async (
 
         const { password: _, ...safe_user } = user;
 
-        return res.status(201).json({
+        return res.status(200).json({
             token,
             message: "User has been logged in successfully",
             user: filtered_user,

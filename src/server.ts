@@ -26,15 +26,13 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: [
-            "http://localhost:19006",
-            "http://localhost:8082",
             ORIGIN_URL
         ],
         methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
     }
 });
 
-const secret = process.env.JWT_SECRET || "";
+const secret = process.env.JWT_SECRET || "klxnfohfe489rhinhrn9hrq3foh5873of5o387t5y37g8r@@";
 
 let conversations: any[] = [];
 let messages: any[] = [];
@@ -158,7 +156,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-    res.send("Hello World");
+    return res.status(200).send("Hello World");
 })
 app.use("/auth", authRoutes);
 app.use("/listing", listingRoute);
