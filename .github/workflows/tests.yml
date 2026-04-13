@@ -18,5 +18,7 @@ jobs:
       - name: Run Tests
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GCS_PRIVATE_KEY: ${{ secrets.GCS_PRIVATE_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: npm run ci
 
