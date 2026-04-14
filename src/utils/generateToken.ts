@@ -9,7 +9,7 @@ if (!JWT_EXPIRES_IN || !JWT_SECRET) {
 
 export const generateToken = (user_id: string): string => {
     const payload: { id: string } = { id: user_id };
-    const options: SignOptions = { expiresIn: Number(JWT_EXPIRES_IN) };
+    const options: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
 
     return sign(payload, JWT_SECRET as string, options);
 }
