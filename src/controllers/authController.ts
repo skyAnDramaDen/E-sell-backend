@@ -100,9 +100,9 @@ export const loginUser = async (
 
         const is_password_valid = await verify(user.password.trim(), password.trim());
 
-        if (!is_password_valid) {
+        if (user && !is_password_valid) {
             return res.status(400).json({
-                message: "Email and password do not match",
+                message: "Email and password do not match but there is a user",
                 success: false,
             })
         }

@@ -7,7 +7,7 @@
   },
   "item": [
     {
-      "name": "New Request",
+      "name": "home route check",
       "event": [
         {
           "listen": "test",
@@ -50,7 +50,7 @@
       "response": []
     },
     {
-      "name": "New Request",
+      "name": "Missing email and passwords check",
       "event": [
         {
           "listen": "test",
@@ -107,7 +107,7 @@
       "response": []
     },
     {
-      "name": "New Request",
+      "name": "Found user check",
       "event": [
         {
           "listen": "test",
@@ -154,7 +154,7 @@
       "response": []
     },
     {
-      "name": "New Request",
+      "name": "Password validity check",
       "event": [
         {
           "listen": "test",
@@ -201,7 +201,7 @@
       "response": []
     },
     {
-      "name": "New Request",
+      "name": "Login success if user and password are valid",
       "event": [
         {
           "listen": "test",

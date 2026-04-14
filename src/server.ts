@@ -18,7 +18,7 @@ import {verifyToken} from "./utils/verifyToken";
 dotenv.config();
 
 const PORT = Number(process.env.PORT) || 3000;
-const ORIGIN_URL = process.env.ORIGIN_URL || "http://localhost:3000";
+const ORIGIN_URL = "http://localhost:3000";
 
 const app = express();
 const server = http.createServer(app);
