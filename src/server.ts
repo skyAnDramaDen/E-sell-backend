@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createClient } from "redis";
 
 import http from "http";
 import { Server } from "socket.io";
@@ -19,6 +21,7 @@ dotenv.config();
 
 const PORT = Number(process.env.PORT) || 3000;
 const ORIGIN_URL = "http://localhost:3000";
+const redisUrl = process.env.REDIS_URL;
 
 const app = express();
 const server = http.createServer(app);
@@ -31,6 +34,23 @@ const io = new Server(server, {
         methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
     }
 });
+
+const pubClient = createClient({
+    url: redisUrl,
+})
+
+const subClient = pubClient.duplicate();
+
+async function connectClients() {
+    await Promise.all([
+        pubClient.connect(),
+        subClient.connect(),
+    ])
+}
+
+connectClients();
+
+io.adapter(createAdapter(pubClient, subClient));
 
 const secret = process.env.JWT_SECRET || "klxnfohfe489rhinhrn9hrq3foh5873of5o387t5y37g8r@@";
 
