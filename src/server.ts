@@ -57,34 +57,6 @@ const secret = process.env.JWT_SECRET || "klxnfohfe489rhinhrn9hrq3foh5873of5o387
 let conversations: any[] = [];
 let messages: any[] = [];
 
-// const onlineUsers: Map<string, Set<string>> = new Map();
-
-// function addOnlineUser(userId: string, socketId: string) {
-//     if (!onlineUsers.has(userId)) {
-//         onlineUsers.set(userId, new Set());
-//     }
-
-//     onlineUsers.get(userId)!.add(socketId);
-// }
-
-// function removeOnlineUser(userId: string, socketId: string) {
-//     const sockets = onlineUsers.get(userId);
-
-//     if (!sockets) return;
-
-//     sockets.delete(socketId);
-
-//     if (sockets.size === 0) {
-//         onlineUsers.delete(userId);
-//     }
-// }
-
-// function emitOnlineUsers(io: Server) {
-//     const users = Array.from(onlineUsers.keys());
-
-//     io.emit("online_users", users);
-// }
-
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
 
