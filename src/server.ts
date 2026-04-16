@@ -57,33 +57,33 @@ const secret = process.env.JWT_SECRET || "klxnfohfe489rhinhrn9hrq3foh5873of5o387
 let conversations: any[] = [];
 let messages: any[] = [];
 
-const onlineUsers: Map<number, Set<string>> = new Map();
+// const onlineUsers: Map<string, Set<string>> = new Map();
 
-function addOnlineUser(userId: number, socketId: string) {
-    if (!onlineUsers.has(userId)) {
-        onlineUsers.set(userId, new Set());
-    }
+// function addOnlineUser(userId: string, socketId: string) {
+//     if (!onlineUsers.has(userId)) {
+//         onlineUsers.set(userId, new Set());
+//     }
 
-    onlineUsers.get(userId)!.add(socketId);
-}
+//     onlineUsers.get(userId)!.add(socketId);
+// }
 
-function removeOnlineUser(userId: number, socketId: string) {
-    const sockets = onlineUsers.get(userId);
+// function removeOnlineUser(userId: string, socketId: string) {
+//     const sockets = onlineUsers.get(userId);
 
-    if (!sockets) return;
+//     if (!sockets) return;
 
-    sockets.delete(socketId);
+//     sockets.delete(socketId);
 
-    if (sockets.size === 0) {
-        onlineUsers.delete(userId);
-    }
-}
+//     if (sockets.size === 0) {
+//         onlineUsers.delete(userId);
+//     }
+// }
 
-function emitOnlineUsers(io: Server) {
-    const users = Array.from(onlineUsers.keys());
+// function emitOnlineUsers(io: Server) {
+//     const users = Array.from(onlineUsers.keys());
 
-    io.emit("online_users", users);
-}
+//     io.emit("online_users", users);
+// }
 
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
@@ -99,27 +99,44 @@ io.use((socket, next) => {
             return next(new Error("Unauthorized"));
         }
 
-        (socket as any).user = user;
+        socket.data.user = user;
         next();
     } catch (err) {
-        next(new Error("Unauthorized"));
+        return next(new Error("Unauthorized"));
     }
 });
 
 io.on("connection", (socket) => {
-
-    const user = (socket as any).user;
+    const user = socket.data.user;
 
     if (!user) {
         socket.disconnect();
         return;
     }
 
-    const user_id: number = user.id;
+    const user_id: string = user.id;
 
-    addOnlineUser(user_id, socket.id);
+    const userKey = `user:online:${user_id}`;
 
-    emitOnlineUsers(io);
+    const handleConnection = async () => {
+        try {
+            await pubClient.sAdd(userKey, socket.id);
+
+            await pubClient.sAdd("total_online_users", String(user_id));
+
+            const total = await pubClient.sCard("total_online_users");
+
+            io.emit("no_of_current_users", { "total_users": total })
+        } catch (error) {
+            console.log("Redis connection error.")
+        }
+    }
+
+    handleConnection();
+
+    // addOnlineUser(user_id, socket.id);
+
+    // emitOnlineUsers(io);
 
     socket.on("join_conversation", (conversationId: number) => {
         const room = `conversation_${conversationId}`;
@@ -155,11 +172,30 @@ io.on("connection", (socket) => {
             });
     });
 
-    socket.on("disconnect", () => {
-        removeOnlineUser(user_id, socket.id);
+    // socket.on("disconnect", () => {
+    //     removeOnlineUser(user_id, socket.id);
 
-        emitOnlineUsers(io);
-    });
+    //     emitOnlineUsers(io);
+    // });
+    socket.on("disconnect", () => {
+        const handleDisconnection = async () => {
+            try {
+                await pubClient.sRem(userKey, socket.id)
+
+                const remaining = await pubClient.sCard(userKey);
+
+                if (remaining === 0) {
+                    await pubClient.sRem("total_online_users", String(user_id));
+                }
+
+                io.emit("user_offline", { user_id });
+            } catch (error) {
+                console.log("Redis connection error");
+            }
+        }
+
+        handleDisconnection();
+    })
 });
 
 app.use(cors(
