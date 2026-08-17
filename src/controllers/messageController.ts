@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import prisma from "../config/dbClient";
 import {
     MessageAndSuccessResponseBody
 } from "../types/interfaces";
 import {Message} from "@prisma/client";
+import {saveMessageFunction} from "../services/messageService";
 
 export const sendMessage = async (req: Request, res: Response<Message | MessageAndSuccessResponseBody>) => {
     try {
@@ -16,18 +16,16 @@ export const sendMessage = async (req: Request, res: Response<Message | MessageA
             })
         }
 
-        const created_message = await prisma.message.create({
-            data: message
-        })
+        const newlySavedMessage = await saveMessageFunction(message);
 
-        if (!created_message) {
+        if (!newlySavedMessage) {
             return res.status(400).json({
                 message: "Failed to create message",
                 success: false,
             })
         }
 
-        return res.status(201).json(created_message)
+        return res.status(201).json(newlySavedMessage)
     } catch (error) {
         return res.status(500).json({
             message: "There was an error sending the message",

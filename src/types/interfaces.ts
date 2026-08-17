@@ -129,6 +129,22 @@ export interface Message {
     conversation?: Conversation;
 }
 
+export interface SavedMessage {
+    id: string;
+    content: string;
+    senderId: string;
+    conversationId: string;
+    read: boolean;
+    createdAt: Date;
+    sender?: MessageSenderUser;
+    conversation?: Conversation;
+}
+
+export interface MessageSenderUser {
+    username: string;
+    id: string;
+}
+
 export interface Conversation {
     id: string;
     type: ConversationType;
@@ -136,7 +152,14 @@ export interface Conversation {
     sellerId?: string | undefined | null;
     createdAt: Date;
     messages: Message[]
-    participant: ConversationParticipant[];
+    participants: ConversationParticipant[];
+}
+
+export interface saveMessagePayload {
+    content: string;
+    senderId: string;
+    conversationId: string;
+    read: boolean;
 }
 
 export interface ConversationParticipant {

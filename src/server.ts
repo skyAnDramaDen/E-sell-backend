@@ -16,6 +16,7 @@ import messageRoute from "./routes/messageRoute.js";
 import conversationParticipantRoute from "./routes/conversationParticipantRoute";
 
 import {verifyToken} from "./utils/verifyToken";
+import {saveMessageFunction} from "./services/messageService";
 
 dotenv.config();
 
@@ -32,7 +33,9 @@ const io = new Server(server, {
             ORIGIN_URL
         ],
         methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
-    }
+    },
+    pingInterval: 10000,
+    pingTimeout: 5000,
 });
 
 const pubClient = createClient({
@@ -54,9 +57,6 @@ io.adapter(createAdapter(pubClient, subClient));
 
 const secret = process.env.JWT_SECRET || "klxnfohfe489rhinhrn9hrq3foh5873of5o387t5y37g8r@@";
 
-let conversations: any[] = [];
-let messages: any[] = [];
-
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
 
@@ -68,12 +68,14 @@ io.use((socket, next) => {
         const user = verifyToken(token, secret);
 
         if (!user) {
+            console.log("its saying there is no user");
             return next(new Error("Unauthorized"));
         }
 
         socket.data.user = user;
         next();
     } catch (err) {
+        console.log("the error is from the catch block");
         return next(new Error("Unauthorized"));
     }
 });
@@ -92,23 +94,25 @@ io.on("connection", (socket) => {
 
     const handleConnection = async () => {
         try {
-            await pubClient.sAdd(userKey, socket.id);
+            let alreadyOnline = await pubClient.sMembers(userKey);
+            socket.join(userKey);
+            if (alreadyOnline.length === 0) {
+                await pubClient.sAdd(userKey, socket.id);
+                await pubClient.sAdd("total_online_users", String(user_id));
 
-            await pubClient.sAdd("total_online_users", String(user_id));
+                const total = await pubClient.sCard("total_online_users");
 
-            const total = await pubClient.sCard("total_online_users");
-
-            io.emit("no_of_current_users", { "total_users": total })
+                io.emit("no_of_current_users", { "total_users": total })
+            } else {
+                console.log(alreadyOnline.length);
+                console.log("socket.rooms", alreadyOnline);
+            }
         } catch (error) {
             console.log("Redis connection error.")
         }
     }
 
     handleConnection();
-
-    // addOnlineUser(user_id, socket.id);
-
-    // emitOnlineUsers(io);
 
     socket.on("join_conversation", (conversationId: number) => {
         const room = `conversation_${conversationId}`;
@@ -122,13 +126,28 @@ io.on("connection", (socket) => {
         socket.leave(room);
     })
 
-    socket.on("send_message", (data) => {
-        const { message } = data;
+    socket.on("send_message", async (data) => {
+        const { content, conversationId, senderId } = data;
+        let newlySavedMessage;
 
-        messages.push(message);
+        let messagePayload = {
+            content,
+            conversationId,
+            senderId: senderId,
+            read: false,
+        }
+        newlySavedMessage = await saveMessageFunction(messagePayload);
 
-        io.to(`conversation_${message.conversationId}`).emit("receive_message", message);
+        io.to(`conversation_${newlySavedMessage.conversationId}`).emit("receive_message", newlySavedMessage);
     });
+
+    socket.on("send_conversation_id_to_receiver", async (data) => {
+        const { conversationId, receiverId } = data;
+
+        const receiverKey = `user:online:${receiverId}`;
+
+        io.to(receiverKey).emit("receive_conversation_id_from_sender", conversationId);
+    })
 
     socket.on("typing", (conversationId: number) => {
         socket.to(`conversation_${conversationId}`)
@@ -144,30 +163,27 @@ io.on("connection", (socket) => {
             });
     });
 
-    // socket.on("disconnect", () => {
-    //     removeOnlineUser(user_id, socket.id);
+    const handleDisconnection = async () => {
+        try {
+            await pubClient.sRem(userKey, socket.id);
+            socket.leave(socket.id);
 
-    //     emitOnlineUsers(io);
-    // });
-    socket.on("disconnect", () => {
-        const handleDisconnection = async () => {
-            try {
-                await pubClient.sRem(userKey, socket.id)
+            await pubClient.del(userKey);
 
-                const remaining = await pubClient.sCard(userKey);
+            const remaining = await pubClient.sCard(userKey);
 
-                if (remaining === 0) {
-                    await pubClient.sRem("total_online_users", String(user_id));
-                }
+            if (remaining === 0) {
+                await pubClient.del(userKey);
+                await pubClient.sRem("total_online_users", String(user_id));
 
                 io.emit("user_offline", { user_id });
-            } catch (error) {
-                console.log("Redis connection error");
             }
+        } catch (error) {
+            console.log("Redis connection error");
         }
+    }
 
-        handleDisconnection();
-    })
+    socket.on("disconnect", handleDisconnection);
 });
 
 app.use(cors(

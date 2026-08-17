@@ -1,10 +1,16 @@
 import { Request, Response } from "express";
-import prisma from "../config/dbClient";
 
 import {
-    MessageAndSuccessResponseBody, Conversations, Conversation
+    MessageAndSuccessResponseBody, Conversations, Conversation, Message, SavedMessage
 } from "../types/interfaces";
-import {ConversationType} from "@prisma/client";
+import {
+    fetchAllConversations,
+    fetchOneConversation,
+    fetchOneConversationByParticipantsId,
+    fetchOneConversationLastMessage,
+    fetchOneConversationWithLastMessage,
+    findOrCreateConversationAndParticipants,
+} from "../services/conversationService";
 
 export const getAllConversations = async (req: Request, res: Response<Conversations | MessageAndSuccessResponseBody>) => {
     try {
@@ -12,34 +18,21 @@ export const getAllConversations = async (req: Request, res: Response<Conversati
 
         if (!id) {
             return res.status(400).json({
-                message: "There are no conversations now ",
+                message: "Unauthorized request",
                 success: false,
             })
         }
 
-        const conversations = await prisma.conversation.findMany({
-            where: {
-                type: "SELLER_BUYER",
-                participant: {
-                    some:{
-                        userId: id,
-                    }
-                }
-            },
-            include: {
-                messages: true,
-                participant: true
-            },
-        });
+        let allConversations = await fetchAllConversations(id);
 
-        if (conversations.length === 0) {
+        if (allConversations.length === 0) {
             return res.status(201).json({
                 message: "There are no conversations at this time",
                 success: true,
             })
         }
 
-        return res.status(201).json(conversations)
+        return res.status(201).json(allConversations)
     } catch (error) {
         return res.status(201).json({
             message: "There was an error fetching the conversations",
@@ -48,35 +41,42 @@ export const getAllConversations = async (req: Request, res: Response<Conversati
     }
 }
 
-export const getConversation = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody>) => {
+export const getConversation = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody | null>) => {
     try {
-        const conversationId = req.body.conversationId;
+        const {conversationId} = req.body;
 
         if (!conversationId) {
             return res.status(400).json({
-                message: "There is no id value",
+                message: "Unauthorized request",
                 success: false,
             })
         }
 
-        const conversation = await prisma.conversation.findUnique({
-            where: {
-                id: conversationId,
-            },
-            include: {
-                messages: true,
-                participant: true
-            },
+        let oneConversation = await fetchOneConversation(conversationId);
+
+        return res.status(201).json(oneConversation)
+    } catch (error) {
+        return res.status(500).json({
+            message: "There was an error fetching the conversation",
+            success: false,
         })
+    }
+}
 
-        if (!conversation) {
+export const getConversationWithLastMessageById = async (req: Request, res: Response) => {
+    try {
+        const {conversationId} = req.body;
+
+        if (!conversationId) {
             return res.status(400).json({
-                message: "No such conversation exists",
+                message: "Unauthorized request",
                 success: false,
             })
         }
 
-        return res.status(201).json(conversation)
+        let oneConversation = await fetchOneConversationWithLastMessage(conversationId);
+
+        return res.status(201).json(oneConversation)
     } catch (error) {
         return res.status(500).json({
             message: "There was an error fetching the conversation",
@@ -87,51 +87,66 @@ export const getConversation = async (req: Request, res: Response<Conversation |
 
 export const createConversation = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody>) => {
     try {
-        const { type } = req.body.payload;
+        const { type, senderId, senderName, receiverId, receiverName } = req.body.payload;
 
-        if (!type) {
+        console.log(type, senderId, senderName, receiverId, receiverName);
+
+        if (!type || !senderName || !senderId || !receiverName || !receiverId) {
             return res.status(400).json({
                 message: "There is no type",
                 success: false,
             })
         }
 
-        if (!Object.values(ConversationType).includes(type)) {
-            return res.status(400).json({
-                message: "Invalid conversation type",
-                success: false,
-            });
-        }
+        // if (!Object.values(ConversationType).includes(type)) {
+        //     return res.status(400).json({
+        //         message: "Invalid conversation type",
+        //         success: false,
+        //     });
+        // }
+        //
+        // const conversation = await prisma.conversation.create({
+        //     data: {
+        //         type: type,
+        //         participant: {
+        //             create: [
+        //                 {
+        //                     userId: senderId,
+        //                     name: senderName,
+        //                 },
+        //                 {
+        //                     userId: receiverId,
+        //                     name: receiverName,
+        //                 }
+        //             ]
+        //         }
+        //     }
+        // })
+        //
+        // if (!conversation) {
+        //     return res.status(400).json({
+        //         message: "Error creating the conversation",
+        //         success: false,
+        //     })
+        // }
+        //
+        // const fullConversation = await prisma.conversation.findUnique({
+        //     where: { id: conversation.id },
+        //     include: {
+        //         messages: true,
+        //         participant: true,
+        //     }
+        // });
+        //
+        // if (!fullConversation) {
+        //     return res.status(400).json({
+        //         message: "Error fetching the conversation",
+        //         success: false,
+        //     })
+        // }
 
-        const conversation = await prisma.conversation.create({
-            data: {
-                type: type,
-            }
-        })
-
-        if (!conversation) {
-            return res.status(400).json({
-                message: "Error creating the conversation",
-                success: false,
-            })
-        }
-
-        const fullConversation = await prisma.conversation.findUnique({
-            where: { id: conversation.id },
-            include: {
-                messages: true,
-                participant: true,
-            }
-        });
-
-        if (!fullConversation) {
-            return res.status(400).json({
-                message: "Error fetching the conversation",
-                success: false,
-            })
-        }
-
-        return res.status(201).json(fullConversation)
+        let fullConversation: Conversation;
+        return res.status(201).json(fullConversation!)
 
     } catch (error) {
         return res.status(400).json({
@@ -141,43 +156,70 @@ export const createConversation = async (req: Request, res: Response<Conversatio
     }
 }
 
-export const getConversationByParticipantsId = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody>) => {
+export const createConversationAndParticipants = async (req: Request, res: Response) => {
+    try {
+        const { type, buyerId, buyerName, sellerId, sellerName } = req.body;
+        console.log("createConversationAndParticipants", type, buyerId, buyerName, sellerId, sellerName);
+        if (!buyerId || !buyerName || !sellerId || !sellerName || !type) {
+            return res.status(400).json({})
+        }
+
+        let conversationId = await findOrCreateConversationAndParticipants(type, buyerId, buyerName, sellerId, sellerName)
+
+        if (conversationId) {
+            return res.status(201).json(conversationId)
+        }
+    } catch (error) {
+        return res.status(400).json({});
+    }
+}
+
+export const getConversationByParticipantsId = async (req: Request, res: Response<Conversation | MessageAndSuccessResponseBody | null>) => {
     try {
         const { buyerId, sellerId } = req.body;
 
         if (!buyerId || !sellerId) {
             res.status(400).json({
-                message: "There is no id value",
+                message: "Unauthorized request",
                 success: false,
             })
         }
 
-        const conversation = await prisma.conversation.findFirst({
-            where: {
-                type: "SELLER_BUYER",
-                AND: [
-                    { participant: { some: { userId: buyerId } } },
-                    { participant: { some: { userId: sellerId } } }
-                ]
-            },
-            include: {
-                messages: true,
-                participant: true
-            }
-        });
+        let fetchedConversation = await fetchOneConversationByParticipantsId(buyerId, sellerId);
 
-        if (!conversation) {
+        if (!fetchedConversation) {
             return res.status(400).json({
                 message: "Error fetching the conversation",
                 success: false,
             })
         }
 
-        return res.status(201).json(conversation);
+        return res.status(201).json(fetchedConversation);
     } catch (error) {
         return res.status(500).json({
             message: "Error fetching the conversation",
             success: false,
         });
+    }
+}
+
+export const fetchConversationLastMessage = async (req: Request, res: Response<SavedMessage | MessageAndSuccessResponseBody | null>) => {
+    try {
+        const { conversationId } = req.body;
+
+        if (!conversationId) {
+            res.status(400).json({
+                message: "Unauthorized request",
+                success: false,
+            })
+        }
+
+        let fetchedConversationLastMessage = await fetchOneConversationLastMessage(conversationId);
+        return res.status(400).json(fetchedConversationLastMessage);
+    } catch (error) {
+        return res.status(400).json({
+            message: "Nothing was found",
+            success: false,
+        })
     }
 }

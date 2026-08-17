@@ -40,3 +40,16 @@ This project implements a professional **Regression Suite** to ensure stability 
    ```bash
    git clone [https://github.com/skyAnDramaDen/E-sell-backend.git](https://github.com/skyAnDramaDen/E-sell-backend.git)
    cd E-sell-backend
+
+2. **Install Dependencies**
+    npm install
+
+3. **Environment Configuration**
+   Create a .env file in the root directory:
+   PORT=3000
+   DATABASE_URL=your_neon_db_connection_string
+   JWT_SECRET=your_secret_key
+   JWT_EXPIRES_IN=1d
+   GCP_PROJECT_ID=your_project_id
+   GCP_BUCKET_NAME=your_bucket_name
+   GOOGLE_APPLICATION_CREDENTIALS=path_to_your_service_account_json

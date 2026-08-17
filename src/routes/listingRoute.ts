@@ -11,4 +11,4 @@ router.post("/delete_listing", deleteListing)
 router.post("/search_listings_by_search_params", searchListingsBySearchParams)
 router.post("/search_listings_by_category", searchListingsByCategory)
 
-export default router;
+export default router

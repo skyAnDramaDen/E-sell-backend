@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { hash, verify } from "argon2";
 import prisma from "../config/dbClient";
+import nodemailer from 'nodemailer'
 
 import {generateToken} from "../utils/generateToken";
 
@@ -61,6 +62,28 @@ export const registerUser = async (
             username: user.username,
             email: user.email,
             phoneNumber: user.phoneNumber || "",
+        }
+
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: user.email,
+            subject: "Registration confirmation",
+            text: "Welcome! You have been successfully registered."
+        };
+
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log("Email sent successfully!");
+        } catch (error) {
+            console.error("Error sending email:", error);
         }
 
         return res.status(201).json({

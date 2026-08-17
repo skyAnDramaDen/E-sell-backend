@@ -23,7 +23,7 @@ model User {
   products  Product[]
   phoneNumber String?
   profileImageUri String?
-  username  String   @unique
+  username  String
   sentMessages  Message[]  @relation("SentMessages")
   conversationParticipants ConversationParticipant[]
 }
@@ -67,7 +67,7 @@ model Conversation {
   createdAt   DateTime   @default(now())
 
   messages    Message[]
-  participant ConversationParticipant[]
+  participants ConversationParticipant[]
 }
 model ConversationParticipant {
   id             String   @id @default(uuid())
