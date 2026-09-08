@@ -9,7 +9,7 @@ import {
     fetchOneConversationByParticipantsId,
     fetchOneConversationLastMessage,
     fetchOneConversationWithLastMessage,
-    findOrCreateConversationAndParticipants,
+    findOrCreateConversationParticipantsAndMessage,
 } from "../services/conversationService";
 
 export const getAllConversations = async (req: Request, res: Response<Conversations | MessageAndSuccessResponseBody>) => {
@@ -156,18 +156,17 @@ export const createConversation = async (req: Request, res: Response<Conversatio
     }
 }
 
-export const createConversationAndParticipants = async (req: Request, res: Response) => {
+export const createConversationParticipantsAndMessage = async (req: Request, res: Response) => {
     try {
-        const { type, buyerId, buyerName, sellerId, sellerName } = req.body;
-        console.log("createConversationAndParticipants", type, buyerId, buyerName, sellerId, sellerName);
-        if (!buyerId || !buyerName || !sellerId || !sellerName || !type) {
+        const { type, buyerId, buyerName, sellerId, sellerName, content } = req.body;
+        if (!buyerId || !buyerName || !sellerId || !sellerName || !type || !content) {
             return res.status(400).json({})
         }
 
-        let conversationId = await findOrCreateConversationAndParticipants(type, buyerId, buyerName, sellerId, sellerName)
+        let conversationMessage = await findOrCreateConversationParticipantsAndMessage(type, content, buyerId, buyerName, sellerId, sellerName)
 
-        if (conversationId) {
-            return res.status(201).json(conversationId)
+        if (conversationMessage) {
+            return res.status(201).json(conversationMessage)
         }
     } catch (error) {
         return res.status(400).json({});

@@ -6,7 +6,7 @@ import {getAllConversations,
     getConversationByParticipantsId,
     fetchConversationLastMessage,
     getConversationWithLastMessageById,
-    createConversationAndParticipants
+    createConversationParticipantsAndMessage
 } from "../controllers/conversationController";
 
 const router = Router();
@@ -17,7 +17,7 @@ router.post("/get_conversation", getConversation);
 
 router.post("/get_conversation_with_last_message_by_id", getConversationWithLastMessageById);
 
-router.post("/create_conversation_and_participants", createConversationAndParticipants);
+router.post("/create_conversation_participants_and_message", createConversationParticipantsAndMessage);
 
 router.post("/create_conversation", createConversation);
 

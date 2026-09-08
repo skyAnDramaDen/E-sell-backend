@@ -10,6 +10,7 @@ import {
     ProductAndSellerResponseBody,
     MessageAndSuccessResponseBody
 } from "../types/interfaces";
+import {fetchAListing} from "../services/listingService";
 
 export const createListing = async (req: Request, res: Response<ListingResponseBody | MessageAndSuccessResponseBody>) => {
     try {
@@ -114,57 +115,10 @@ export const getListing = async (req: Request, res: Response<ProductAndSellerRes
             })
         }
 
-        const product = await prisma.product.findUnique({
-            where: {
-                id: id,
-            },
-            include: {
-                user: true,
-            }
-        })
+        const final_user = await fetchAListing(id);
 
-        let final_user: ProductAndSellerResponseBody;
+        if (!final_user) {
 
-        if (!product) {
-            return res.status(404).json({ message: "Product not found",
-            success: false,});
-        }
-
-        const [files] = await bucket.getFiles({
-            prefix: `${id}/`,
-        })
-
-        if (files.length < 1 || undefined || !files) {
-            return res.status(400).json({
-                message: "There are no uploaded files",
-                success: false,
-            })
-        }
-
-        const imageUrls = files.map(file => {
-            return file.publicUrl();
-        });
-
-        final_user = {
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            condition: product.condition,
-            price: product.price,
-            availability: product.availability,
-            topCategoryId: product.topCategoryId,
-            topCategory: product.topCategory,
-            subCategoryId: product.subCategoryId,
-            subCategory: product.subCategory,
-            lowestCategoryId: product.lowestCategoryId,
-            lowestCategory: product.lowestCategory,
-            location: product.location,
-            sellerName: product.user.username,
-            sellerId: product.user.id,
-            sellerPhoneNumber: product.user.phoneNumber ? product.user.phoneNumber : "",
-            message: "Successfully fetched product and seller data",
-            images: imageUrls,
-            success: true,
         }
 
         return res.status(201).json(final_user);

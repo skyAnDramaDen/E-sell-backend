@@ -68,14 +68,12 @@ io.use((socket, next) => {
         const user = verifyToken(token, secret);
 
         if (!user) {
-            console.log("its saying there is no user");
             return next(new Error("Unauthorized"));
         }
 
         socket.data.user = user;
         next();
     } catch (err) {
-        console.log("the error is from the catch block");
         return next(new Error("Unauthorized"));
     }
 });
@@ -127,8 +125,12 @@ io.on("connection", (socket) => {
     })
 
     socket.on("send_message", async (data) => {
-        const { content, conversationId, senderId } = data;
+        const { content, conversationId, senderId, receiverId, conversationFirstMessage } = data;
         let newlySavedMessage;
+
+        if (!conversationFirstMessage) {
+
+        }
 
         let messagePayload = {
             content,
@@ -137,6 +139,10 @@ io.on("connection", (socket) => {
             read: false,
         }
         newlySavedMessage = await saveMessageFunction(messagePayload);
+
+        const receiverKey = `user:online:${receiverId}`;
+
+        io.to(receiverKey).emit("receive_conversation_id_from_sender", conversationId);
 
         io.to(`conversation_${newlySavedMessage.conversationId}`).emit("receive_message", newlySavedMessage);
     });

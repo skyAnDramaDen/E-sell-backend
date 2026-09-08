@@ -193,7 +193,7 @@ export async function fetchOneConversationLastMessage (conversationId: string): 
     }
 }
 
-export async function findOrCreateConversationAndParticipants (type: ConversationType, buyerId: string, buyerName: string, sellerId: string, sellerName: string) {
+export async function findOrCreateConversationParticipantsAndMessage (type: ConversationType, content: string, buyerId: string, buyerName: string, sellerId: string, sellerName: string) {
     try {
         const existingConversation = await prisma.conversation.findFirst({
             where: {
@@ -201,12 +201,30 @@ export async function findOrCreateConversationAndParticipants (type: Conversatio
                 AND: [
                     { participants: { some: { userId: buyerId } } },
                     { participants: { some: { userId: sellerId } } }
-                ]
+                ],
             }
         })
 
         if  (existingConversation) {
-            return existingConversation.id;
+            let updatedConversation = await prisma.conversation.update({
+                where: {
+                    id: existingConversation.id
+                },
+                data: {
+                    messages: {
+                        create: [{ content: content, senderId: buyerId }]
+                    }
+                },
+                include: {
+                    messages: {
+                        orderBy: {
+                            createdAt: "desc"
+                        },
+                        take: 1,
+                    }
+                }
+            })
+            return updatedConversation.messages[0];
         } else {
             const newConversation = await prisma.conversation.create({
                 data: {
@@ -216,11 +234,22 @@ export async function findOrCreateConversationAndParticipants (type: Conversatio
                             { userId: buyerId, name: buyerName },
                             { userId: sellerId, name: sellerName },
                         ]
+                    },
+                    messages: {
+                        create: [{ content: content, senderId: buyerId }]
+                    }
+                },
+                include: {
+                    messages: {
+                        orderBy: {
+                            createdAt: "desc"
+                        },
+                        take: 1,
                     }
                 }
             })
-            console.log("findOrCreateConversationAndParticipants", newConversation.id)
-            return newConversation.id;
+
+            return newConversation.messages[0];
         }
     } catch (error: any) {
         return error;
